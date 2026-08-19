@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import Navbar from '../components/Navbar';
+import Navbar from '@/components/Navbar';
 
 export default function EtimsQueuePage() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
@@ -11,7 +11,7 @@ export default function EtimsQueuePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <Navbar />
       <main className="max-w-4xl mx-auto p-4 md:p-6">
         <div className="flex justify-between items-center mb-6">
