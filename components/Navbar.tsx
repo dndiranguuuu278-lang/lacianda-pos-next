@@ -10,6 +10,7 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Till / POS', href: '/' },
     { name: 'Sales', href: '/sales' },
+    { name: 'Inventory', href: '/inventory' },
     { name: 'Add Product', href: '/products/add' },
     { name: 'Bulk Import', href: '/import' },
     { name: 'eTIMS', href: '/etims' },
