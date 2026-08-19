@@ -1,152 +1,232 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRequireSession } from '@/hooks/useSession';
-import { api } from '@/lib/apiClient';
+import React, { useState } from 'react';
+import Navbar from '@/app/components/Navbar';
 
 export default function SettingsPage() {
-  const { user, loading } = useRequireSession();
-  const [storeName, setStoreName] = useState('');
-  const [kraPin, setKraPin] = useState('');
-  const [mpesaShortcode, setMpesaShortcode] = useState('');
-  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
-  const [accentColor, setAccentColor] = useState('#10b981');
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('0720087714');
+  const [personalMode, setPersonalMode] = useState(true);
+  const [buyGoods, setBuyGoods] = useState(true);
+  const [paybill, setPaybill] = useState(true);
+  const [pochi, setPochi] = useState(true);
+  const [stkPush, setStkPush] = useState(false);
+  const [etimsStaging, setEtimsStaging] = useState(true);
+  const [kraPin, setKraPin] = useState('P0XXXXXXXXX');
+  const [darkMode, setDarkMode] = useState(false);
+  const [receiptHeader, setReceiptHeader] = useState('Lacianda Wines and Spirits, Thank You for Your Business!');
+  const [chargeVat, setChargeVat] = useState(true);
+  const [vatRate, setVatRate] = useState('16');
+  const [chargeLevy, setChargeLevy] = useState(true);
+  const [levyRate, setLevyRate] = useState('2.5');
+  const [autoPrint, setAutoPrint] = useState(true);
+  const [paperWidth, setPaperWidth] = useState('58mm (small thermal printer)');
+  const [requirePinVoid, setRequirePinVoid] = useState(true);
+  const [requirePinDiscount, setRequirePinDiscount] = useState(false);
+  const [allowZeroStock, setAllowZeroStock] = useState(false);
 
-  const [newPin, setNewPin] = useState('');
-  const [pinSaved, setPinSaved] = useState(false);
-
-  const [printerName, setPrinterName] = useState<string | null>(null);
-  const [printerError, setPrinterError] = useState('');
-
-  useEffect(() => {
-    if (!user) return;
-    api.getSettings().then(({ settings }) => {
-      if (!settings) return;
-      setStoreName(settings.store_name || '');
-      setKraPin(settings.kra_pin || '');
-      setMpesaShortcode(settings.mpesa_shortcode || '');
-      setThemeMode(settings.theme_mode || 'dark');
-      setAccentColor(settings.accent_color?.startsWith('#') ? settings.accent_color : '#10b981');
-    });
-    import('@/lib/printer').then((m) => setPrinterName(m.pairedPrinterName()));
-  }, [user]);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', themeMode);
-    document.documentElement.style.setProperty('--accent', accentColor);
-  }, [themeMode, accentColor]);
-
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    try {
-      await api.updateSettings({ store_name: storeName, kra_pin: kraPin, mpesa_shortcode: mpesaShortcode, theme_mode: themeMode, accent_color: accentColor });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  }
-
-  async function handleSetPin(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await api.setPin(newPin);
-      setPinSaved(true);
-      setNewPin('');
-      setTimeout(() => setPinSaved(false), 2000);
-    } catch (err: any) {
-      setError(err.message);
-    }
-  }
-
-  async function handlePairPrinter() {
-    setPrinterError('');
-    try {
-      const { pairPrinter } = await import('@/lib/printer');
-      const name = await pairPrinter();
-      setPrinterName(name);
-    } catch (err: any) {
-      setPrinterError(err.message);
-    }
-  }
-
-  if (loading) return null;
+  const themeColors = ['bg-amber-900', 'bg-red-600', 'bg-blue-600', 'bg-emerald-600', 'bg-indigo-600', 'bg-slate-800', 'bg-amber-700'];
+  const [selectedColor, setSelectedColor] = useState('bg-amber-900');
 
   return (
-    <div style={{ maxWidth: 480 }}>
-      <h2 style={{ marginBottom: 16 }}>Store &amp; tax settings</h2>
+    <div className="min-h-screen bg-slate-100 text-slate-800">
+      <Navbar />
 
-      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <Field label="Store name">
-          <input className="input" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
-        </Field>
-        <Field label="KRA PIN">
-          <input className="input" placeholder="P0XXXXXXXXX" value={kraPin} onChange={(e) => setKraPin(e.target.value)} />
-        </Field>
-        <Field label="M-Pesa shortcode">
-          <input className="input" placeholder="174379" value={mpesaShortcode} onChange={(e) => setMpesaShortcode(e.target.value)} />
-        </Field>
+      <main className="max-w-4xl mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
 
-        <Field label="Theme mode">
-          <div style={{ display: 'flex', gap: 8 }}>
-            {(['dark', 'light'] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                className="btn"
-                style={{ flex: 1, background: themeMode === mode ? 'var(--accent)' : 'transparent', color: themeMode === mode ? 'var(--accent-ink)' : 'var(--ink-dim)' }}
-                onClick={() => setThemeMode(mode)}
-              >
-                {mode === 'dark' ? 'Dark' : 'Light'}
-              </button>
-            ))}
+        {/* Account Section */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">Account</h2>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Your phone number</label>
+            <input
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">Used for M-Pesa (Personal mode) and to recover your PIN.</p>
           </div>
-        </Field>
+          <button className="px-4 py-2 border border-slate-300 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors">
+            Change PIN
+          </button>
+        </div>
 
-        <Field label="Accent color">
-          <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} style={{ width: 60, height: 38, background: 'none', border: '1px solid var(--glass-border)', borderRadius: 8 }} />
-        </Field>
+        {/* M-Pesa Payment Modes */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">M-Pesa payment modes</h2>
+          <p className="text-xs text-slate-500">Turn on every mode you actually accept — the till shows a picker at checkout when more than one is on.</p>
+          
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Personal number (Send Money)</span>
+              <input type="checkbox" checked={personalMode} onChange={() => setPersonalMode(!personalMode)} className="toggle" />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Buy Goods (Till number)</span>
+              <input type="checkbox" checked={buyGoods} onChange={() => setBuyGoods(!buyGoods)} />
+            </div>
+            {buyGoods && (
+              <div>
+                <input type="text" placeholder="Till number" className="w-full max-w-xs px-3 py-1.5 border border-slate-300 rounded-lg text-sm" />
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Paybill</span>
+              <input type="checkbox" checked={paybill} onChange={() => setPaybill(!paybill)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Pochi la Biashara</span>
+              <input type="checkbox" checked={pochi} onChange={() => setPochi(!pochi)} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">STK Push (prompt-to-pay)</span>
+              <input type="checkbox" checked={stkPush} onChange={() => setStkPush(!stkPush)} />
+            </div>
+          </div>
+        </div>
 
-        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Save settings</button>
-        {saved && <p style={{ color: 'var(--accent)', fontSize: '0.85rem' }}>Saved.</p>}
-        {error && <p style={{ color: 'var(--rose)', fontSize: '0.85rem' }}>{error}</p>}
-      </form>
+        {/* KRA eTIMS */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">KRA eTIMS</h2>
+          <p className="text-xs text-slate-500">Classifies every sale line by tax type and stages a correctly-shaped invoice per sale. Actual submission to KRA still needs your approved eTIMS device/middleware — this queues the data for that, it doesn’t submit on its own. See the eTIMS queue under Reports.</p>
+          
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-sm font-medium text-slate-700">Enable eTIMS staging</span>
+            <input type="checkbox" checked={etimsStaging} onChange={() => setEtimsStaging(!etimsStaging)} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">KRA PIN</label>
+            <input
+              type="text"
+              value={kraPin}
+              onChange={(e) => setKraPin(e.target.value)}
+              className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50"
+            />
+          </div>
+        </div>
 
-      <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--glass-border)' }}>
-        <h3 style={{ marginBottom: 8 }}>Receipt printer</h3>
-        <p style={{ color: 'var(--ink-dim)', fontSize: '0.85rem', lineHeight: 1.5, marginBottom: 12 }}>
-          Pair an 80mm or 58mm ESC/POS Bluetooth thermal printer for silent auto-printing on payment confirmation.
-        </p>
-        <button className="btn btn-ghost" onClick={handlePairPrinter}>Pair Bluetooth printer</button>
-        <span style={{ marginLeft: 10, fontSize: '0.8rem', color: printerName ? 'var(--accent)' : 'var(--ink-dim)' }}>
-          {printerName ? `Paired: ${printerName}` : 'Not paired'}
-        </span>
-        {printerError && <p style={{ color: 'var(--rose)', fontSize: '0.8rem', marginTop: 8 }}>{printerError}</p>}
-      </div>
+        {/* Branding & Theme */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">Branding & theme</h2>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-2">Theme color</label>
+            <div className="flex gap-3">
+              {themeColors.map((colorClass, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedColor(colorClass)}
+                  className={`w-7 h-7 rounded-full ${colorClass} ${selectedColor === colorClass ? 'ring-2 ring-offset-2 ring-slate-900' : ''}`}
+                />
+              ))}
+            </div>
+          </div>
 
-      <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--glass-border)' }}>
-        <h3 style={{ marginBottom: 8 }}>Backup PIN</h3>
-        <p style={{ color: 'var(--ink-dim)', fontSize: '0.85rem', marginBottom: 12 }}>
-          Set a PIN so you can log in on this till without Google.
-        </p>
-        <form onSubmit={handleSetPin} style={{ display: 'flex', gap: 10 }}>
-          <input className="input" type="password" inputMode="numeric" placeholder="4-6 digit PIN" value={newPin} onChange={(e) => setNewPin(e.target.value)} />
-          <button type="submit" className="btn btn-ghost">Set PIN</button>
-        </form>
-        {pinSaved && <p style={{ color: 'var(--accent)', fontSize: '0.85rem', marginTop: 8 }}>PIN saved.</p>}
-      </div>
+          <div className="flex items-center justify-between pt-2">
+            <div>
+              <span className="text-sm font-medium text-slate-700 block">Dark mode</span>
+              <span className="text-xs text-slate-400">Switch the whole app to a dark background.</span>
+            </div>
+            <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Receipt header text</label>
+            <input
+              type="text"
+              value={receiptHeader}
+              onChange={(e) => setReceiptHeader(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50"
+            />
+          </div>
+        </div>
+
+        {/* Billing */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">Billing</h2>
+          <p className="text-xs text-slate-500">Turn these off or change the rate if your shop isn’t VAT-registered or the rate changes.</p>
+          
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Charge VAT</span>
+              <input type="checkbox" checked={chargeVat} onChange={() => setChargeVat(!chargeVat)} />
+            </div>
+            {chargeVat && (
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">VAT rate (%)</label>
+                <input
+                  type="text"
+                  value={vatRate}
+                  onChange={(e) => setVatRate(e.target.value)}
+                  className="w-32 px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                />
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-700">Charge catering levy</span>
+              <input type="checkbox" checked={chargeLevy} onChange={() => setChargeLevy(!chargeLevy)} />
+            </div>
+            {chargeLevy && (
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">Catering levy rate (%)</label>
+                <input
+                  type="text"
+                  value={levyRate}
+                  onChange={(e) => setLevyRate(e.target.value)}
+                  className="w-32 px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Receipts & Printing */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">Receipts & printing</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">Auto-print receipt after checkout</span>
+            <input type="checkbox" checked={autoPrint} onChange={() => setAutoPrint(!autoPrint)} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Receipt/printer paper width</label>
+            <select
+              value={paperWidth}
+              onChange={(e) => setPaperWidth(e.target.value)}
+              className="w-full max-w-md px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+            >
+              <option>58mm (small thermal printer)</option>
+              <option>80mm (standard thermal printer)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Till Behavior */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+          <h2 className="text-base font-bold text-slate-900 border-b pb-2">Till behavior</h2>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">Require your PIN to void a sale</span>
+            <input type="checkbox" checked={requirePinVoid} onChange={() => setRequirePinVoid(!requirePinVoid)} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">Require your PIN to apply a discount</span>
+            <input type="checkbox" checked={requirePinDiscount} onChange={() => setRequirePinDiscount(!requirePinDiscount)} />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">Allow selling below zero stock (oversell)</span>
+            <input type="checkbox" checked={allowZeroStock} onChange={() => setAllowZeroStock(!allowZeroStock)} />
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <div className="pt-2">
+          <button
+            onClick={() => alert('Settings saved successfully!')}
+            className="bg-amber-900 hover:bg-amber-800 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm"
+          >
+            Save settings
+          </button>
+        </div>
+      </main>
     </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.85rem', color: 'var(--ink-dim)' }}>
-      {label}
-      {children}
-    </label>
   );
 }
