@@ -1,137 +1,59 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/apiClient';
-
-const LINKS = [
-  { href: '/', label: 'Till', icon: '🧾' },
-  { href: '/stock', label: 'Stock', icon: '📦' },
-  { href: '/import', label: 'Import', icon: '📄' },
-  { href: '/sales', label: 'Sales', icon: '📊' },
-  { href: '/etims-queue', label: 'eTIMS', icon: '🧮' },
-  { href: '/settings', label: 'Settings', icon: '⚙️' }
-];
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [user, setUser] = useState<{ name: string | null; email: string } | null>(null);
-  const [storeName, setStoreName] = useState('Lacianda POS');
 
-  useEffect(() => {
-    api.me().then(({ user }) => setUser(user)).catch(() => setUser(null));
-    api.getSettings().then(({ settings }) => settings?.store_name && setStoreName(settings.store_name)).catch(() => {});
-  }, [pathname]);
-
-  if (pathname === '/login') return null;
-
-  async function handleLogout() {
-    await api.logout();
-    router.replace('/login');
-  }
+  const navLinks = [
+    { name: 'Till / POS', href: '/' },
+    { name: 'Sales', href: '/sales' },
+    { name: 'Add Product', href: '/products/add' },
+    { name: 'Bulk Import', href: '/import' },
+    { name: 'eTIMS', href: '/etims' },
+    { name: 'Z-Report', href: '/reports/z' },
+    { name: 'Settings', href: '/settings' },
+  ];
 
   return (
-    <>
-      <header
-        className="glass"
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 18px',
-          borderRadius: 0,
-          borderLeft: 'none',
-          borderRight: 'none',
-          borderTop: 'none'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--font-display)', fontWeight: 600 }}>
-          <span
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 9,
-              background: 'linear-gradient(135deg, var(--accent), #059669)',
-              color: 'var(--accent-ink)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700
-            }}
-          >
-            L
+    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <span className="font-extrabold text-amber-500 tracking-wide text-base">
+            Lacianda Wines & Spirits
           </span>
-          <span>{storeName}</span>
+          <nav className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    isActive
+                      ? 'bg-amber-700 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
-        <nav style={{ display: 'none', gap: 4 }} className="md:flex">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="btn btn-ghost"
-              style={{
-                borderColor: pathname === l.href ? 'var(--accent)' : 'transparent',
-                color: pathname === l.href ? 'var(--accent)' : 'var(--ink)'
-              }}
-            >
-              {l.icon} {l.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {user && <span style={{ fontSize: '0.82rem', color: 'var(--ink-dim)' }}>{user.name || user.email}</span>}
-          <button onClick={handleLogout} className="btn btn-ghost" title="Log out">
-            ⏻
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <span className="block text-xs font-bold text-slate-200">dennis</span>
+            <span className="block text-[10px] text-amber-400 font-mono">0720087714</span>
+          </div>
+          <div className="w-9 h-9 rounded-full bg-amber-950 border border-amber-800 flex items-center justify-center text-amber-400 font-bold text-xs">
+            D
+          </div>
         </div>
-      </header>
-
-      {/* Mobile bottom nav */}
-      <nav
-        className="glass"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 30,
-          display: 'flex',
-          justifyContent: 'space-around',
-          borderRadius: 0,
-          borderLeft: 'none',
-          borderRight: 'none',
-          borderBottom: 'none',
-          padding: '8px 4px calc(8px + env(safe-area-inset-bottom))'
-        }}
-      >
-        {LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-              fontSize: '0.66rem',
-              padding: '6px 10px',
-              borderRadius: 10,
-              color: pathname === l.href ? 'var(--accent)' : 'var(--ink-dim)',
-              textDecoration: 'none'
-            }}
-          >
-            <span style={{ fontSize: '1.1rem' }}>{l.icon}</span>
-            {l.label}
-          </Link>
-        ))}
-      </nav>
-    </>
+      </div>
+    </header>
   );
 }
