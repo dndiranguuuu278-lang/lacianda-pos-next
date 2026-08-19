@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Navbar from '@/app/components/Navbar';
+import Navbar from './components/Navbar';
 
 export default function POSPage() {
   const [cart, setCart] = useState<any[]>([]);
