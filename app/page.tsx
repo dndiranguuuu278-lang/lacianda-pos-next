@@ -1,75 +1,125 @@
 'use client';
-
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 
-export default function POSPage() {
+export default function TillPage() {
+  const [inventory, setInventory] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [paymentMethod, setPaymentMethod] = useState('STK');
-  const [phoneNumber, setPhoneNumber] = useState('0720087714');
-  const [saleComplete, setSaleComplete] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [paymentModal, setPaymentModal] = useState(false);
+  const [tenderType, setTenderType] = useState('Cash');
+  const [amountPaid, setAmountPaid] = useState('');
+  const [receiptSuccess, setReceiptSuccess] = useState<any | null>(null);
 
-  const products = [
-    { id: 1, name: 'Tusker Lager 500ml', category: 'Beer', type: 'Single Bottle', price: 260 },
-    { id: 2, name: 'Tusker Lager 500ml', category: 'Beer', type: 'Full Crate (20)', price: 5200 },
-    { id: 3, name: 'Guinness Extra Stout 330ml', category: 'Beer', type: 'Single Bottle', price: 230 },
-    { id: 4, name: 'Guinness Extra Stout 330ml', category: 'Beer', type: 'Full Crate (24)', price: 5520 },
-    { id: 5, name: 'Beefeater London Dry Gin 750ml', category: 'Gin', type: 'Single Bottle', price: 2200 },
-    { id: 6, name: 'Campari Bitter 1L', category: 'Aperitif', type: 'Single Bottle', price: 3100 },
-    { id: 7, name: 'Jameson Irish Whiskey 750ml', category: 'Whisky', type: 'Single Bottle', price: 3200 },
-  ];
+  useEffect(() => {
+    const storedInventory = localStorage.getItem('lacianda_inventory');
+    if (storedInventory) {
+      setInventory(JSON.parse(storedInventory));
+    } else {
+      const defaultItems = [
+        { id: '1', name: 'Kenya Cane 750ml', category: 'Spirit', price: 750, stock: 24 },
+        { id: '2', name: 'Gilbeys Gin 750ml', category: 'Gin', price: 1200, stock: 3 },
+        { id: '3', name: 'Chrome Vodka 750ml', category: 'Vodka', price: 650, stock: 30 },
+        { id: '4', name: 'Black & White Whisky 750ml', category: 'Whisky', price: 1600, stock: 4 },
+        { id: '5', name: 'Tusker Lager 500ml', category: 'Beer', price: 220, stock: 50 },
+        { id: '6', name: 'Keringet Drinking Water 1L', category: 'Water', price: 100, stock: 100 },
+      ];
+      setInventory(defaultItems);
+      localStorage.setItem('lacianda_inventory', JSON.stringify(defaultItems));
+    }
+  }, []);
 
-  const filteredProducts = activeCategory === 'All' 
-    ? products 
-    : products.filter(p => p.category === activeCategory);
+  const lowStockItems = inventory.filter(i => i.stock <= 5);
+  const categories = ['All', 'Spirit', 'Gin', 'Vodka', 'Whisky', 'Beer', 'Water'];
+
+  const filteredProducts = inventory.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const addToCart = (product: any) => {
+    if (product.stock <= 0) return;
     setCart(prev => {
-      const existing = prev.find(item => item.id === product.id && item.type === product.type);
+      const existing = prev.find(i => i.id === product.id);
       if (existing) {
-        return prev.map(item => 
-          item.id === product.id && item.type === product.type 
-            ? { ...item, qty: item.qty + 1 } 
-            : item
-        );
+        return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
       }
       return [...prev, { ...product, qty: 1 }];
     });
   };
 
-  const totalDue = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const updateQty = (id: string, delta: number) => {
+    setCart(prev => prev.map(i => {
+      if (i.id === id) {
+        const newQty = i.qty + delta;
+        return newQty > 0 ? { ...i, qty: newQty } : null;
+      }
+      return i;
+    }).filter(Boolean));
+  };
+
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  const vat = Math.round(subtotal * (16 / 116));
 
   const handleCompleteSale = () => {
-    if (cart.length === 0) return;
-    alert(`Sale Complete! Processed via ${paymentMethod} for ${phoneNumber || 'Cash'}. Total: KES ${totalDue.toLocaleString()}`);
+    const saleId = `LWS-${Date.now().toString().slice(-8)}`;
+    const newSale = {
+      id: saleId,
+      timestamp: new Date().toISOString(),
+      items: cart,
+      total: subtotal,
+      tender: tenderType,
+      status: 'Completed',
+    };
+
+    const existingSales = JSON.parse(localStorage.getItem('lacianda_pos_sales') || '[]');
+    localStorage.setItem('lacianda_pos_sales', JSON.stringify([newSale, ...existingSales]));
+
+    const updatedInventory = inventory.map(prod => {
+      const cartItem = cart.find(ci => ci.id === prod.id);
+      if (cartItem) {
+        return { ...prod, stock: Math.max(0, prod.stock - cartItem.qty) };
+      }
+      return prod;
+    });
+    setInventory(updatedInventory);
+    localStorage.setItem('lacianda_inventory', JSON.stringify(updatedInventory));
+
+    setReceiptSuccess(newSale);
     setCart([]);
-    setSaleComplete(true);
-    setTimeout(() => setSaleComplete(false), 3000);
+    setPaymentModal(false);
+    setAmountPaid('');
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
       <Navbar />
 
-      <main className="max-w-7xl w-full mx-auto p-6 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Catalog Section */}
-        <div className="lg:col-span-2 space-y-6">
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">Till & Quick Tap Catalog</h1>
-            <p className="text-xs text-slate-400 mt-0.5">Sell beers by single bottle or full crate instantly</p>
-          </div>
+      {lowStockItems.length > 0 && (
+        <div className="bg-orange-50 border-b border-orange-200 text-orange-800 px-4 py-2 text-xs font-medium text-center">
+          ⚠️ Low stock warning: {lowStockItems.length} item(s) have 5 or fewer units remaining.
+        </div>
+      )}
+      
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          <input
+            type="text"
+            placeholder="Search products or scan barcode..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#78350f]"
+          />
 
-          {/* Categories */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            {['All', 'Beer', 'Gin', 'Whisky', 'Wine', 'Aperitif'].map(cat => (
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {categories.map(cat => (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  activeCategory === cat 
-                    ? 'bg-amber-600 text-white shadow-sm' 
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                  selectedCategory === cat ? 'bg-[#78350f] text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 {cat}
@@ -77,105 +127,150 @@ export default function POSPage() {
             ))}
           </div>
 
-          {/* Product Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {filteredProducts.map(product => (
-              <div 
-                key={`${product.id}-${product.type}`}
+              <button
+                key={product.id}
+                disabled={product.stock <= 0}
                 onClick={() => addToCart(product)}
-                className="bg-slate-900 border border-slate-800 hover:border-amber-600/50 p-4 rounded-2xl cursor-pointer transition-all shadow-sm flex flex-col justify-between"
+                className={`p-4 bg-white rounded-lg border text-left flex flex-col justify-between transition-all ${
+                  product.stock > 0 ? 'border-gray-200 hover:border-[#78350f] hover:shadow-sm cursor-pointer' : 'border-gray-200 opacity-50 cursor-not-allowed bg-gray-100'
+                }`}
               >
                 <div>
-                  <span className="text-[10px] font-mono text-amber-500 uppercase tracking-wider">{product.category} • {product.type}</span>
-                  <h3 className="text-sm font-semibold text-white mt-1">{product.name}</h3>
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{product.category}</span>
+                  <h3 className="text-sm font-bold text-gray-900 mt-1 line-clamp-2">{product.name}</h3>
                 </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">{product.type}</span>
-                  <span className="text-sm font-bold text-amber-400">KES {product.price.toLocaleString()}</span>
+                <div className="mt-4 flex justify-between items-end">
+                  <span className="text-sm font-mono font-bold text-[#78350f]">KES {product.price.toLocaleString()}</span>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${product.stock > 5 ? 'bg-green-50 text-green-700' : product.stock > 0 ? 'bg-orange-50 text-orange-700' : 'bg-red-50 text-red-700'}`}>
+                    {product.stock > 0 ? `${product.stock} left` : 'Out'}
+                  </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Current Order & Payment Section */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-sm">
-          <div className="space-y-4">
-            <h2 className="text-base font-bold text-white border-b border-slate-800 pb-3">Current Order</h2>
-            
-            {cart.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-500">
-                Cart is empty. Select items on the left.
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                {cart.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-slate-950/50 border border-slate-800/80 p-3 rounded-xl text-xs">
-                    <div>
-                      <p className="font-semibold text-white">{item.name}</p>
-                      <p className="text-[10px] text-slate-400">{item.type} × {item.qty}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col justify-between h-[calc(100vh-160px)] sticky top-20">
+          <div>
+            <div className="flex justify-between items-center border-b pb-3 mb-3">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700">Current sale</h2>
+              <button onClick={() => setCart([])} className="text-xs text-red-600 hover:underline">Clear</button>
+            </div>
+
+            <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-380px)] pr-1">
+              {cart.length === 0 ? (
+                <p className="text-center text-gray-400 text-xs py-12">Cart is empty. Select items to begin.</p>
+              ) : (
+                cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-center bg-gray-50 p-2.5 rounded-md">
+                    <div className="flex-1 pr-2">
+                      <p className="text-xs font-semibold text-gray-800">{item.name}</p>
+                      <p className="text-[11px] text-gray-500 font-mono">KES {item.price.toLocaleString()} each</p>
                     </div>
-                    <span className="font-bold text-amber-400">KES {(item.price * item.qty).toLocaleString()}</span>
+                    <div className="flex items-center space-x-2">
+                      <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 bg-white border rounded text-xs font-bold flex items-center justify-center">-</button>
+                      <span className="text-xs font-mono font-semibold w-5 text-center">{item.qty}</span>
+                      <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 bg-white border rounded text-xs font-bold flex items-center justify-center">+</button>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Payment Methods Section */}
-            <div className="space-y-2 pt-2 border-t border-slate-800">
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                Payment Method
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {['STK', 'TILL', 'PAYBILL', 'POCHI', 'PERSONAL', 'CASH'].map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setPaymentMethod(mode)}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all border ${
-                      paymentMethod === mode
-                        ? 'bg-amber-600 text-white border-amber-500 shadow-sm'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
-                    }`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-
-              {paymentMethod !== 'CASH' && (
-                <div className="pt-2">
-                  <label className="text-[10px] text-slate-400 block mb-1 font-mono">Customer Phone Number</label>
-                  <input
-                    type="text"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-amber-400 font-mono focus:outline-none focus:ring-2 focus:ring-amber-600"
-                    placeholder="07XXXXXXXX"
-                  />
-                </div>
+                ))
               )}
             </div>
           </div>
 
-          <div className="border-t border-slate-800 pt-4 mt-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400 font-medium">Total Due:</span>
-              <span className="text-lg font-extrabold text-amber-400">KES {totalDue.toLocaleString()}</span>
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex justify-between text-xs text-gray-500">
+              <span>VAT (16% Incl.)</span>
+              <span className="font-mono">KES {vat.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-base font-bold text-gray-900">
+              <span>Total due</span>
+              <span className="font-mono text-[#78350f]">KES {subtotal.toLocaleString()}</span>
             </div>
             <button
-              onClick={handleCompleteSale}
               disabled={cart.length === 0}
-              className={`w-full py-3 rounded-xl text-xs font-bold transition-all shadow-md ${
-                cart.length === 0 
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
-                  : 'bg-amber-600 hover:bg-amber-500 text-white cursor-pointer'
-              }`}
+              onClick={() => setPaymentModal(true)}
+              className="w-full mt-2 py-3 bg-[#78350f] text-white rounded-lg text-sm font-bold hover:bg-[#60280b] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {saleComplete ? 'Sale Recorded Successfully!' : `Complete Sale (${paymentMethod})`}
+              Charge KES {subtotal.toLocaleString()}
             </button>
           </div>
         </div>
       </main>
+
+      {paymentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl space-y-4">
+            <h3 className="text-lg font-bold">Select payment method</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {['Cash', 'M-Pesa Till', 'M-Pesa Paybill', 'Pochi la Biashara'].map(method => (
+                <button
+                  key={method}
+                  onClick={() => setTenderType(method)}
+                  className={`py-3 px-4 border rounded-md text-xs font-semibold transition-all ${
+                    tenderType === method ? 'border-[#78350f] bg-[#78350f]/5 text-[#78350f]' : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {method}
+                </button>
+              ))}
+            </div>
+
+            {tenderType === 'Cash' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Amount Tendered (KES)</label>
+                <input
+                  type="number"
+                  placeholder="Enter cash given..."
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#78350f]"
+                />
+                {Number(amountPaid) >= subtotal && (
+                  <p className="text-xs text-green-600 font-semibold mt-1">Change due: KES {(Number(amountPaid) - subtotal).toLocaleString()}</p>
+                )}
+              </div>
+            )}
+
+            <div className="flex space-x-2 pt-2">
+              <button onClick={() => setPaymentModal(false)} className="flex-1 py-2.5 border border-gray-300 rounded-md text-sm font-semibold hover:bg-gray-100">Cancel</button>
+              <button onClick={handleCompleteSale} className="flex-1 py-2.5 bg-[#78350f] text-white rounded-md text-sm font-semibold hover:bg-[#60280b]">Confirm & Print</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {receiptSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-sm w-full p-6 shadow-xl space-y-4 text-center print:shadow-none">
+            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold print:hidden">✓</div>
+            <h3 className="text-lg font-bold">Lacianda Wines & Spirits</h3>
+            <p className="text-[11px] text-gray-500 font-mono">Receipt: {receiptSuccess.id}</p>
+            
+            <div className="bg-gray-50 p-3 rounded text-left text-xs space-y-2 font-mono border border-dashed border-gray-300">
+              {receiptSuccess.items.map((i: any) => (
+                <div key={i.id} className="flex justify-between">
+                  <span className="truncate pr-2">{i.name}</span>
+                  <span>{i.qty} x {i.price}</span>
+                </div>
+              ))}
+              <div className="flex justify-between font-bold border-t pt-2">
+                <span>Total ({receiptSuccess.tender}):</span>
+                <span>KES {receiptSuccess.total.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <p className="text-[10px] text-gray-400 italic">Alcohol is not for sale to persons under 18.</p>
+
+            <div className="flex space-x-2 pt-2 print:hidden">
+              <button onClick={() => window.print()} className="flex-1 py-2.5 border border-gray-300 rounded-md text-sm font-semibold hover:bg-gray-100">Print</button>
+              <button onClick={() => setReceiptSuccess(null)} className="flex-1 py-2.5 bg-[#78350f] text-white rounded-md text-sm font-semibold hover:bg-[#60280b]">New Sale</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
