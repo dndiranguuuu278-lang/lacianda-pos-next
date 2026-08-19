@@ -12,7 +12,7 @@ const initialInventory = [
 ];
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState(initialInventory);
+  const [inventory] = useState(initialInventory);
   const [search, setSearch] = useState('');
 
   const filteredInventory = inventory.filter(item =>
