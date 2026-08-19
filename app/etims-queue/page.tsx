@@ -2,55 +2,38 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 
-interface EtimsInvoice {
-  id: string;
-  timestamp: string;
-  kraPin: string;
-  items: Array<{ name: string; price: number; qty: number; taxType: string }>;
-  subtotal: number;
-  vat: number;
-  levy: number;
-  total: number;
-  status: 'Staged' | 'Submitted';
-}
-
 export default function EtimsQueuePage() {
-  const [invoices, setInvoices] = useState<EtimsInvoice[]>([]);
-  const [kraPin, setKraPin] = useState('P0XXXXXXXXX');
+  const [queue, setQueue] = useState<any[]>([]);
+  const [payloadModal, setPayloadModal] = useState<any | null>(null);
 
   useEffect(() => {
-    // Load settings for KRA PIN
-    const settings = JSON.parse(localStorage.getItem('lacianda_pos_settings') || '{}');
-    if (settings.etims?.kraPin) {
-      setKraPin(settings.etims.kraPin);
-    }
-
-    // Load sales and map them into eTIMS staged format
-    const rawSales = JSON.parse(localStorage.getItem('lacianda_pos_sales') || '[]');
-    const staged: EtimsInvoice[] = rawSales.map((sale: any, idx: number) => {
-      const subtotal = sale.total ? sale.total / 1.185 : 0; // Back-calculating approximate tax split if inclusive
-      const vat = subtotal * 0.16;
-      const levy = subtotal * 0.025;
+    const storedSales = JSON.parse(localStorage.getItem('lacianda_pos_sales') || '[]');
+    const mappedQueue = storedSales.map((sale: any) => {
+      const taxable = sale.total ? Math.round(sale.total / 1.16) : 0;
+      const vat = sale.total ? Math.round(sale.total - taxable) : 0;
       return {
-        id: sale.id || `INV-${2026}-${1000 + idx}`,
-        timestamp: sale.timestamp || new Date().toISOString(),
-        kraPin: settings.etims?.kraPin || 'P0XXXXXXXXX',
-        items: sale.items || [],
-        subtotal: Math.round(subtotal),
-        vat: Math.round(vat),
-        levy: Math.round(levy),
+        id: sale.id || 'LWS-20260816-0001',
+        date: new Date(sale.timestamp || Date.now()).toLocaleString(),
+        taxable,
+        vat,
         total: sale.total || 0,
+        items: sale.items || [],
         status: sale.etimsStatus || 'Staged',
       };
     });
-    setInvoices(staged);
+    setQueue(mappedQueue);
   }, []);
 
-  const handleExportBatch = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(invoices, null, 2));
+  const handleMarkSubmitted = (id: string) => {
+    const updated = queue.map(item => item.id === id ? { ...item, status: 'Submitted' } : item);
+    setQueue(updated);
+  };
+
+  const handleExportJson = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(queue, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `etims_queue_${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchor.setAttribute("download", `etims_queue_${Date.now()}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -59,53 +42,74 @@ export default function EtimsQueuePage() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <Navbar />
-      <main className="max-w-6xl mx-auto p-6">
+      <main className="max-w-7xl mx-auto p-4 md:p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold">KRA eTIMS Staging Queue</h1>
-            <p className="text-xs text-gray-500 mt-1">Active KRA PIN: <span className="font-mono font-semibold">{kraPin}</span></p>
+            <h1 className="text-xl font-bold">eTIMS queue</h1>
+            <p className="text-xs text-gray-500 mt-1">
+              Sales below have already been classified by tax type per item. Submit them through your approved eTIMS device/software, then mark them submitted here to keep the queue clean.
+            </p>
           </div>
-          <button 
-            onClick={handleExportBatch}
-            className="px-4 py-2 bg-amber-800 text-white rounded-md text-sm font-medium hover:bg-amber-900 transition-colors"
-          >
-            Export Batch for Middleware
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={handleExportJson}
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium hover:bg-gray-100 transition-colors"
+            >
+              Export as JSON
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-xs font-medium hover:bg-gray-100 transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-100 border-b text-xs uppercase text-gray-600">
               <tr>
-                <th className="p-4">Invoice ID</th>
-                <th className="p-4">Time</th>
-                <th className="p-4">Items Count</th>
-                <th className="p-4 text-right">VAT (16%)</th>
-                <th className="p-4 text-right">Levy (2.5%)</th>
-                <th className="p-4 text-right">Total (KES)</th>
-                <th className="p-4 text-center">Status</th>
+                <th className="p-4">Receipt</th>
+                <th className="p-4">Date</th>
+                <th className="p-4 text-right">Taxable</th>
+                <th className="p-4 text-right">VAT</th>
+                <th className="p-4 text-right">Total</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y text-sm">
-              {invoices.length === 0 ? (
+              {queue.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-gray-500">
-                    No sales recorded yet to stage for eTIMS.
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                    No sales in eTIMS queue.
                   </td>
                 </tr>
               ) : (
-                invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-gray-50">
-                    <td className="p-4 font-mono font-medium">{inv.id}</td>
-                    <td className="p-4 text-gray-600">{new Date(inv.timestamp).toLocaleString()}</td>
-                    <td className="p-4">{inv.items.length} items</td>
-                    <td className="p-4 text-right font-mono">KES {inv.vat.toLocaleString()}</td>
-                    <td className="p-4 text-right font-mono">KES {inv.levy.toLocaleString()}</td>
-                    <td className="p-4 text-right font-mono font-semibold">KES {inv.total.toLocaleString()}</td>
-                    <td className="p-4 text-center">
-                      <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
-                        {inv.status}
-                      </span>
+                queue.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="p-4 font-mono font-medium">{item.id}</td>
+                    <td className="p-4 text-gray-600">{item.date}</td>
+                    <td className="p-4 text-right font-mono">KES {item.taxable.toLocaleString()}</td>
+                    <td className="p-4 text-right font-mono">KES {item.vat.toLocaleString()}</td>
+                    <td className="p-4 text-right font-mono font-semibold">KES {item.total.toLocaleString()}</td>
+                    <td className="p-4 text-center space-x-2">
+                      <button
+                        onClick={() => setPayloadModal(item)}
+                        className="text-xs text-[#78350f] font-medium hover:underline"
+                      >
+                        View payload
+                      </button>
+                      {item.status !== 'Submitted' ? (
+                        <button
+                          onClick={() => handleMarkSubmitted(item.id)}
+                          className="px-3 py-1 bg-[#78350f] text-white rounded text-xs font-semibold hover:bg-[#60280b] transition-colors"
+                        >
+                          Mark submitted
+                        </button>
+                      ) : (
+                        <span className="text-xs text-green-700 font-semibold bg-green-50 px-2 py-1 rounded">Submitted</span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -114,6 +118,25 @@ export default function EtimsQueuePage() {
           </table>
         </div>
       </main>
+
+      {/* Payload Modal */}
+      {payloadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full p-6 shadow-xl">
+            <h3 className="text-lg font-bold mb-2">eTIMS Payload — {payloadModal.id}</h3>
+            <p className="text-xs text-gray-500 mb-4">{payloadModal.date}</p>
+            <div className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs max-h-60 overflow-y-auto mb-4">
+              <pre>{JSON.stringify(payloadModal, null, 2)}</pre>
+            </div>
+            <button
+              onClick={() => setPayloadModal(null)}
+              className="w-full py-2 bg-[#78350f] text-white rounded-md text-sm font-semibold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
