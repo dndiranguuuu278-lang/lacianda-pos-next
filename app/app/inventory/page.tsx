@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Navbar from '@/app/components/Navbar';
+import Navbar from '../components/Navbar';
 
 const initialInventory = [
   { id: 1, barcode: '616110123456', name: 'Tusker Lager 500ml', category: 'Beer', price: 260, stock: 120, size: '500ml' },
