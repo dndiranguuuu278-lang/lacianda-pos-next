@@ -1,119 +1,119 @@
 'use client';
+import { useState, useEffect } from 'react';
+import Navbar from '../components/Navbar';
 
-import { useEffect, useState } from 'react';
-import { useRequireSession } from '@/hooks/useSession';
-import { api } from '@/lib/apiClient';
-
-interface QueueRow {
+interface EtimsInvoice {
   id: string;
-  sale_id: string;
-  receipt_number: string;
-  status: 'pending' | 'submitted' | 'failed';
-  attempts: number;
-  last_error: string | null;
-  cuin: string | null;
-  created_at: string;
-  updated_at: string;
+  timestamp: string;
+  kraPin: string;
+  items: Array<{ name: string; price: number; qty: number; taxType: string }>;
+  subtotal: number;
+  vat: number;
+  levy: number;
+  total: number;
+  status: 'Staged' | 'Submitted';
 }
 
-const FILTERS: { label: string; value?: string }[] = [
-  { label: 'All', value: undefined },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Failed', value: 'failed' },
-  { label: 'Submitted', value: 'submitted' }
-];
-
 export default function EtimsQueuePage() {
-  const { user, loading } = useRequireSession();
-  const [rows, setRows] = useState<QueueRow[]>([]);
-  const [filter, setFilter] = useState<string | undefined>(undefined);
-  const [retrying, setRetrying] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [invoices, setInvoices] = useState<EtimsInvoice[]>([]);
+  const [kraPin, setKraPin] = useState('P0XXXXXXXXX');
 
   useEffect(() => {
-    if (user) refresh();
-  }, [user, filter]);
-
-  async function refresh() {
-    try {
-      const { queue } = await api.listEtimsQueue(filter);
-      setRows(queue);
-    } catch (err: any) {
-      setError(err.message);
+    // Load settings for KRA PIN
+    const settings = JSON.parse(localStorage.getItem('lacianda_pos_settings') || '{}');
+    if (settings.etims?.kraPin) {
+      setKraPin(settings.etims.kraPin);
     }
-  }
 
-  async function handleRetry(id: string) {
-    setRetrying(id);
-    try {
-      await api.retryEtims(id);
-      await refresh();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setRetrying(null);
-    }
-  }
+    // Load sales and map them into eTIMS staged format
+    const rawSales = JSON.parse(localStorage.getItem('lacianda_pos_sales') || '[]');
+    const staged: EtimsInvoice[] = rawSales.map((sale: any, idx: number) => {
+      const subtotal = sale.total ? sale.total / 1.185 : 0; // Back-calculating approximate tax split if inclusive
+      const vat = subtotal * 0.16;
+      const levy = subtotal * 0.025;
+      return {
+        id: sale.id || `INV-${2026}-${1000 + idx}`,
+        timestamp: sale.timestamp || new Date().toISOString(),
+        kraPin: settings.etims?.kraPin || 'P0XXXXXXXXX',
+        items: sale.items || [],
+        subtotal: Math.round(subtotal),
+        vat: Math.round(vat),
+        levy: Math.round(levy),
+        total: sale.total || 0,
+        status: sale.etimsStatus || 'Staged',
+      };
+    });
+    setInvoices(staged);
+  }, []);
 
-  if (loading) return null;
-
-  const pendingCount = rows.filter((r) => r.status !== 'submitted').length;
+  const handleExportBatch = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(invoices, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `etims_queue_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
-        <h2>eTIMS submission queue</h2>
-        {pendingCount > 0 && <span className="badge badge-pending">{pendingCount} awaiting fiscalization</span>}
-      </div>
-      <p style={{ color: 'var(--ink-dim)', marginBottom: 16, lineHeight: 1.5 }}>
-        Every invoice attempt sent to KRA is logged here — this doubles as your compliance audit trail. Sales that
-        couldn&apos;t reach eTIMS (offline till, KRA downtime, missing onboarding) stay <strong>pending</strong> or{' '}
-        <strong>failed</strong> here rather than blocking checkout; retry them once connectivity is restored.
-      </p>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        {FILTERS.map((f) => (
-          <button
-            key={f.label}
-            onClick={() => setFilter(f.value)}
-            className="btn"
-            style={{
-              background: filter === f.value ? 'var(--accent)' : 'transparent',
-              color: filter === f.value ? 'var(--accent-ink)' : 'var(--ink-dim)'
-            }}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {error && <p style={{ color: 'var(--rose)', marginBottom: 12 }}>{error}</p>}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {rows.map((r) => (
-          <div key={r.id} className="glass" style={{ padding: '14px 16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, flexWrap: 'wrap' }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>{r.receipt_number}</div>
-                <div style={{ color: 'var(--ink-dim)', fontSize: '0.78rem', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
-                  {new Date(r.updated_at).toLocaleString('en-KE')} · {r.attempts} attempt{r.attempts === 1 ? '' : 's'}
-                </div>
-                {r.cuin && <div style={{ fontSize: '0.8rem', color: 'var(--accent)', marginTop: 4 }}>CU Invoice: {r.cuin}</div>}
-                {r.last_error && <div style={{ fontSize: '0.8rem', color: 'var(--rose)', marginTop: 4 }}>{r.last_error}</div>}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className={`badge badge-${r.status}`}>{r.status}</span>
-                {r.status !== 'submitted' && (
-                  <button className="btn btn-ghost" disabled={retrying === r.id} onClick={() => handleRetry(r.id)}>
-                    {retrying === r.id ? 'Retrying…' : 'Retry'}
-                  </button>
-                )}
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-6xl mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">KRA eTIMS Staging Queue</h1>
+            <p className="text-xs text-gray-500 mt-1">Active KRA PIN: <span className="font-mono font-semibold">{kraPin}</span></p>
           </div>
-        ))}
-        {!rows.length && <p style={{ color: 'var(--ink-dim)' }}>No submissions in this filter yet.</p>}
-      </div>
+          <button 
+            onClick={handleExportBatch}
+            className="px-4 py-2 bg-amber-800 text-white rounded-md text-sm font-medium hover:bg-amber-900 transition-colors"
+          >
+            Export Batch for Middleware
+          </button>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-100 border-b text-xs uppercase text-gray-600">
+              <tr>
+                <th className="p-4">Invoice ID</th>
+                <th className="p-4">Time</th>
+                <th className="p-4">Items Count</th>
+                <th className="p-4 text-right">VAT (16%)</th>
+                <th className="p-4 text-right">Levy (2.5%)</th>
+                <th className="p-4 text-right">Total (KES)</th>
+                <th className="p-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y text-sm">
+              {invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
+                    No sales recorded yet to stage for eTIMS.
+                  </td>
+                </tr>
+              ) : (
+                invoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-gray-50">
+                    <td className="p-4 font-mono font-medium">{inv.id}</td>
+                    <td className="p-4 text-gray-600">{new Date(inv.timestamp).toLocaleString()}</td>
+                    <td className="p-4">{inv.items.length} items</td>
+                    <td className="p-4 text-right font-mono">KES {inv.vat.toLocaleString()}</td>
+                    <td className="p-4 text-right font-mono">KES {inv.levy.toLocaleString()}</td>
+                    <td className="p-4 text-right font-mono font-semibold">KES {inv.total.toLocaleString()}</td>
+                    <td className="p-4 text-center">
+                      <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                        {inv.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </main>
     </div>
   );
 }
