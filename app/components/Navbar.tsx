@@ -1,53 +1,52 @@
 'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import Navbar from '../../components/Navbar'; // Correct relative depth from app/products/add/
+// OR use: import Navbar from '@/components/Navbar';
 
-export default function Navbar() {
-  const pathname = usePathname();
+export default function AddProductPage() {
+  const [formData, setFormData] = useState({ name: '', category: '', price: '', stock: '' });
 
-  const navItems = [
-    { name: 'Till', href: '/' },
-    { name: 'Inventory', href: '/inventory' },
-    { name: 'Add Product', href: '/add-product' },
-    { name: 'Z-Report', href: '/z-report' },
-    { name: 'eTIMS Queue', href: '/etims-queue' },
-    { name: 'Settings', href: '/settings' },
-  ];
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const inventory = JSON.parse(localStorage.getItem('lacianda_inventory') || '[]');
+    const newItem = { 
+        ...formData, 
+        id: Date.now().toString(), 
+        price: Number(formData.price), 
+        stock: Number(formData.stock) 
+    };
+    localStorage.setItem('lacianda_inventory', JSON.stringify([...inventory, newItem]));
+    alert('Product added successfully!');
+    setFormData({ name: '', category: '', price: '', stock: '' });
+  };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-8">
-          <span className="font-bold text-base text-[#78350f]">Lacianda Wines & Spirits</span>
-          <nav className="hidden md:flex space-x-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`px-3 py-2 rounded-md text-xs font-semibold transition-colors ${
-                    isActive
-                      ? 'bg-[#78350f] text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-        <div className="flex items-center space-x-3 text-xs">
-          <span className="text-gray-500 font-medium">Cashier: <strong className="text-gray-800">dennis</strong></span>
-          <button
-            onClick={() => alert('Logged out successfully')}
-            className="px-2.5 py-1.5 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-    </header>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <Navbar />
+      <main className="max-w-lg mx-auto p-4 md:p-6">
+        <h1 className="text-xl font-bold mb-6">Add New Product</h1>
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Product Name</label>
+            <input required type="text" className="w-full px-3 py-2 border rounded-md text-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+            <input required type="text" placeholder="e.g. Spirit, Whisky, Beer" className="w-full px-3 py-2 border rounded-md text-sm" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Price (KES)</label>
+              <input required type="number" className="w-full px-3 py-2 border rounded-md text-sm" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Initial Stock</label>
+              <input required type="number" className="w-full px-3 py-2 border rounded-md text-sm" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} />
+            </div>
+          </div>
+          <button className="w-full py-2.5 bg-[#78350f] text-white rounded-md text-sm font-semibold hover:bg-[#60280b]">Save Product</button>
+        </form>
+      </main>
+    </div>
   );
 }
