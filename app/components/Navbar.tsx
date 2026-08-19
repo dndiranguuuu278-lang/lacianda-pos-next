@@ -13,7 +13,7 @@ export default function Navbar() {
     { name: 'Inventory', href: '/inventory' },
     { name: 'Add product', href: '/products/add' },
     { name: 'Bulk import', href: '/import' },
-    { name: 'Z-Report', href: '/reports/z' },
+    { name: 'Z-Report', href: '/z-report' },
     { name: 'eTIMS', href: '/etims' },
     { name: 'Settings', href: '/settings' },
   ];
