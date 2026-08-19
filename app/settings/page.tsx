@@ -1,59 +1,68 @@
-'use client';
-import { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
+import Image from "next/image";
 
-export default function SettingsPage() {
-  const [storeName, setStoreName] = useState('Lacianda Wines and Spirits');
-  const [kraPin, setKraPin] = useState('P051234567X');
-  const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('lacianda_pos_settings');
-    if (saved) {
-      const p = JSON.parse(saved);
-      setStoreName(p.storeName || storeName);
-      setKraPin(p.kraPin || kraPin);
-    }
-  }, []);
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    localStorage.setItem('lacianda_pos_settings', JSON.stringify({ storeName, kraPin }));
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-  };
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <Navbar />
-      <main className="max-w-4xl mx-auto p-4 md:p-6">
-        <h1 className="text-xl font-bold mb-6">POS Settings</h1>
-
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 text-green-700 text-xs font-medium rounded-md border border-green-200">
-            Settings saved successfully!
-          </div>
-        )}
-
-        <form onSubmit={handleSave} className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500 mb-2">Store Profile & Tax Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Store Name</label>
-                <input type="text" value={storeName} onChange={(e) => setStoreName(e.target.value)} className="w-full px-3 py-2 border rounded-md text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">KRA PIN</label>
-                <input type="text" value={kraPin} onChange={(e) => setKraPin(e.target.value)} className="w-full px-3 py-2 border rounded-md text-sm" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <button type="submit" className="px-6 py-2.5 bg-[#78350f] text-white rounded-md text-sm font-semibold hover:bg-[#60280b]">Save settings</button>
-          </div>
-        </form>
+    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <Image
+          className="dark:invert h-5 w-[100px]"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
+        />
+        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            To get started, edit the{" "}
+            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
+              page.tsx
+            </code>{" "}
+            file.
+          </h1>
+          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+          <a
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert h-[14px] w-4"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={14}
+            />
+            Deploy Now
+          </a>
+          <a
+            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
       </main>
     </div>
   );
