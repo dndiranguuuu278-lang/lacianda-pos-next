@@ -60,11 +60,11 @@ export default function SettingsPage() {
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Personal number (Send Money)</span>
-              <input type="checkbox" checked={personalMode} onChange={() => setPersonalMode(!personalMode)} className="toggle" />
+              <input type="checkbox" checked={personalMode} onChange={() => setPersonalMode(!personalMode)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Buy Goods (Till number)</span>
-              <input type="checkbox" checked={buyGoods} onChange={() => setBuyGoods(!buyGoods)} />
+              <input type="checkbox" checked={buyGoods} onChange={() => setBuyGoods(!buyGoods)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
             {buyGoods && (
               <div>
@@ -73,15 +73,15 @@ export default function SettingsPage() {
             )}
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Paybill</span>
-              <input type="checkbox" checked={paybill} onChange={() => setPaybill(!paybill)} />
+              <input type="checkbox" checked={paybill} onChange={() => setPaybill(!paybill)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Pochi la Biashara</span>
-              <input type="checkbox" checked={pochi} onChange={() => setPochi(!pochi)} />
+              <input type="checkbox" checked={pochi} onChange={() => setPochi(!pochi)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">STK Push (prompt-to-pay)</span>
-              <input type="checkbox" checked={stkPush} onChange={() => setStkPush(!stkPush)} />
+              <input type="checkbox" checked={stkPush} onChange={() => setStkPush(!stkPush)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
           </div>
         </div>
@@ -89,11 +89,11 @@ export default function SettingsPage() {
         {/* KRA eTIMS */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-900 border-b pb-2">KRA eTIMS</h2>
-          <p className="text-xs text-slate-500">Classifies every sale line by tax type and stages a correctly-shaped invoice per sale. Actual submission to KRA still needs your approved eTIMS device/middleware — this queues the data for that, it doesn’t submit on its own. See the eTIMS queue under Reports.</p>
+          <p className="text-xs text-slate-500">Classifies every sale line by tax type and stages a correctly-shaped invoice per sale. Actual submission to KRA still needs your approved eTIMS device/middleware.</p>
           
           <div className="flex items-center justify-between pt-2">
             <span className="text-sm font-medium text-slate-700">Enable eTIMS staging</span>
-            <input type="checkbox" checked={etimsStaging} onChange={() => setEtimsStaging(!etimsStaging)} />
+            <input type="checkbox" checked={etimsStaging} onChange={() => setEtimsStaging(!etimsStaging)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">KRA PIN</label>
@@ -127,7 +127,7 @@ export default function SettingsPage() {
               <span className="text-sm font-medium text-slate-700 block">Dark mode</span>
               <span className="text-xs text-slate-400">Switch the whole app to a dark background.</span>
             </div>
-            <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} />
+            <input type="checkbox" checked={darkMode} onChange={() => setDarkMode(!darkMode)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
           </div>
 
           <div>
@@ -149,7 +149,7 @@ export default function SettingsPage() {
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Charge VAT</span>
-              <input type="checkbox" checked={chargeVat} onChange={() => setChargeVat(!chargeVat)} />
+              <input type="checkbox" checked={chargeVat} onChange={() => setChargeVat(!chargeVat)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
             {chargeVat && (
               <div>
@@ -164,7 +164,7 @@ export default function SettingsPage() {
             )}
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-slate-700">Charge catering levy</span>
-              <input type="checkbox" checked={chargeLevy} onChange={() => setChargeLevy(!chargeLevy)} />
+              <input type="checkbox" checked={chargeLevy} onChange={() => setChargeLevy(!chargeLevy)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
             </div>
             {chargeLevy && (
               <div>
@@ -185,7 +185,7 @@ export default function SettingsPage() {
           <h2 className="text-base font-bold text-slate-900 border-b pb-2">Receipts & printing</h2>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-700">Auto-print receipt after checkout</span>
-            <input type="checkbox" checked={autoPrint} onChange={() => setAutoPrint(!autoPrint)} />
+            <input type="checkbox" checked={autoPrint} onChange={() => setAutoPrint(!autoPrint)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Receipt/printer paper width</label>
@@ -205,15 +205,15 @@ export default function SettingsPage() {
           <h2 className="text-base font-bold text-slate-900 border-b pb-2">Till behavior</h2>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-700">Require your PIN to void a sale</span>
-            <input type="checkbox" checked={requirePinVoid} onChange={() => setRequirePinVoid(!requirePinVoid)} />
+            <input type="checkbox" checked={requirePinVoid} onChange={() => setRequirePinVoid(!requirePinVoid)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-700">Require your PIN to apply a discount</span>
-            <input type="checkbox" checked={requirePinDiscount} onChange={() => setRequirePinDiscount(!requirePinDiscount)} />
+            <input type="checkbox" checked={requirePinDiscount} onChange={() => setRequirePinDiscount(!requirePinDiscount)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-slate-700">Allow selling below zero stock (oversell)</span>
-            <input type="checkbox" checked={allowZeroStock} onChange={() => setAllowZeroStock(!allowZeroStock)} />
+            <input type="checkbox" checked={allowZeroStock} onChange={() => setAllowZeroStock(!allowZeroStock)} className="h-4 w-4 rounded border-slate-300 text-amber-900 focus:ring-amber-900" />
           </div>
         </div>
 
