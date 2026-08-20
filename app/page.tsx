@@ -94,7 +94,6 @@ export default function TillPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      <Navbar />
 
       {lowStockItems.length > 0 && (
         <div className="bg-orange-50 border-b border-orange-200 text-orange-800 px-4 py-2 text-xs font-medium text-center">
