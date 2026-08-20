@@ -38,12 +38,10 @@ export default function TillPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const currentTime = Date.now();
       
-      // Ignore if user is actively typing in a standard input field
       if (['INPUT', 'TEXTAREA'].includes((document.activeElement as HTMLElement)?.tagName)) {
         return;
       }
 
-      // Hardware scanners input characters very rapidly (< 100ms apart)
       if (currentTime - lastKeyTime > 100) {
         barcodeBuffer = '';
       }
@@ -52,15 +50,12 @@ export default function TillPage() {
       if (e.key === 'Enter') {
         if (barcodeBuffer.trim().length > 0) {
           const scannedCode = barcodeBuffer.trim();
-          
           const matchedProduct = inventory.find(
             (item) => item.id === scannedCode || item.name.toLowerCase().includes(scannedCode.toLowerCase())
           );
 
           if (matchedProduct) {
             addToCart(matchedProduct);
-          } else {
-            console.warn(`Scanned item not found: ${scannedCode}`);
           }
         }
         barcodeBuffer = '';
@@ -138,31 +133,33 @@ export default function TillPage() {
   };
 
   return (
-    <div className="flex flex-1 h-[calc(100vh-4rem)] bg-gray-100 overflow-hidden relative">
-      {/* Left Pane: Current Sale / Cart */}
-      <div className="w-full lg:w-4/12 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
+    /* FIXED: Strict flex-row to prevent layout stacking on lower resolution monitors */
+    <div className="flex flex-row w-full h-[calc(100vh-4rem)] bg-gray-100 overflow-hidden">
+      
+      {/* Left Pane: Current Sale / Cart - Strictly fixed width */}
+      <div className="w-1/3 min-w-[300px] max-w-md bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm z-10 h-full">
         <h2 className="text-lg font-bold text-gray-800 mb-3">Current Sale</h2>
         
         {cart.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
             Scan or tap a product to begin.
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
             {cart.map((item) => (
               <div key={item.id} className="flex justify-between items-center bg-gray-50 p-2.5 rounded border border-gray-100">
-                <div>
-                  <p className="font-medium text-sm text-gray-800">{item.name}</p>
-                  <p className="text-xs text-gray-500">KES {item.price} × {item.qty}</p>
+                <div className="flex-1 pr-2">
+                  <p className="font-medium text-sm text-gray-800 leading-tight">{item.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">KES {item.price} × {item.qty}</p>
                 </div>
-                <p className="font-bold text-sm text-gray-900">KES {item.price * item.qty}</p>
+                <p className="font-bold text-sm text-gray-900 whitespace-nowrap">KES {item.price * item.qty}</p>
               </div>
             ))}
           </div>
         )}
 
         {/* Cart Total & Checkout Actions */}
-        <div className="mt-4 pt-3 border-t border-gray-200">
+        <div className="mt-4 pt-4 border-t border-gray-200 shrink-0">
           <div className="flex justify-between text-base font-bold text-gray-900 mb-3">
             <span>Total:</span>
             <span>KES {calculateTotal().toLocaleString()}</span>
@@ -177,9 +174,9 @@ export default function TillPage() {
         </div>
       </div>
 
-      {/* Right Pane: Catalog, Search & Categories */}
-      <div className="flex-1 flex flex-col p-4 overflow-hidden">
-        <div className="mb-3">
+      {/* Right Pane: Catalog, Search & Categories - Takes remaining space */}
+      <div className="flex-1 flex flex-col p-4 overflow-hidden h-full">
+        <div className="mb-3 shrink-0">
           <input
             type="text"
             value={search}
@@ -189,12 +186,12 @@ export default function TillPage() {
           />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-none shrink-0">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 selectedCategory === cat
                   ? 'bg-[#4a2e2b] text-white'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -205,28 +202,31 @@ export default function TillPage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 pr-1">
-          {filteredProducts.map((product) => (
-            <button
-              key={product.id}
-              onClick={() => addToCart(product)}
-              className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-[#4a2e2b] transition-all text-left flex flex-col justify-between h-28"
-            >
-              <div>
-                <p className="font-semibold text-xs text-gray-800 line-clamp-2">{product.name}</p>
-                <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                  Stock: {product.stock}
-                </span>
-              </div>
-              <p className="font-bold text-sm text-[#4a2e2b]">KES {product.price.toLocaleString()}</p>
-            </button>
-          ))}
+        {/* Products Grid Area */}
+        <div className="flex-1 overflow-y-auto pr-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 pb-6">
+            {filteredProducts.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => addToCart(product)}
+                className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-[#4a2e2b] transition-all text-left flex flex-col justify-between h-28"
+              >
+                <div>
+                  <p className="font-semibold text-xs text-gray-800 line-clamp-2">{product.name}</p>
+                  <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                    Stock: {product.stock}
+                  </span>
+                </div>
+                <p className="font-bold text-sm text-[#4a2e2b]">KES {product.price.toLocaleString()}</p>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Payment Checkout Modal */}
       {paymentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-96 shadow-xl">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Complete Payment</h3>
             <p className="text-sm text-gray-600 mb-4">Total Due: <span className="font-bold text-gray-900">KES {calculateTotal().toLocaleString()}</span></p>
@@ -278,7 +278,7 @@ export default function TillPage() {
 
       {/* Success Receipt Modal */}
       {receiptSuccess && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-6 w-96 shadow-xl text-center">
             <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
             <h3 className="text-lg font-bold text-gray-800 mb-1">Transaction Successful</h3>
