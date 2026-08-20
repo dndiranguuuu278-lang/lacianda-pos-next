@@ -8,7 +8,7 @@ import {
   saveMpesaConfig,
   type MpesaConfig
 } from '@/lib/mpesaConfig';
-import LabelCard from '@/app/components/LabelCard';
+import LabelCard from '@/components/LabelCard';
 import WaxSeal from '@/components/WaxSeal';
 
 export default function SettingsPage() {
