@@ -2,181 +2,266 @@
 
 import { useState, useEffect } from 'react';
 
-export default function InventoryPage() {
+export default function TillPage() {
   const [inventory, setInventory] = useState<any[]>([]);
+  const [cart, setCart] = useState<any[]>([]);
   const [search, setSearch] = useState('');
-  const [isEditing, setIsEditing] = useState<any | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [paymentModal, setPaymentModal] = useState(false);
+  const [tenderType, setTenderType] = useState('Cash');
+  const [amountPaid, setAmountPaid] = useState('');
+  const [receiptSuccess, setReceiptSuccess] = useState<any | null>(null);
 
-  // Load inventory on mount
+  // Load inventory from local storage on mount
   useEffect(() => {
-    const stored = localStorage.getItem('lacianda_inventory');
-    if (stored) {
-      setInventory(JSON.parse(stored));
+    const storedInventory = localStorage.getItem('lacianda_inventory');
+    if (storedInventory) {
+      setInventory(JSON.parse(storedInventory));
+    } else {
+      const defaultItems = [
+        { id: '1', name: 'Beefeater London Dry Gin 750ml', category: 'Gin', price: 2200, stock: 12 },
+        { id: '2', name: 'The Botanist Islay Dry Gin 750ml', category: 'Gin', price: 4500, stock: 4 },
+        { id: '3', name: 'Guinness MicroDraught 330ml Can', category: 'Beer', price: 250, stock: 25 },
+        { id: '4', name: 'Campari Bitter 1L', category: 'Aperitif', price: 3400, stock: 8 },
+        { id: '5', name: 'Makers Mark Bourbon 750ml', category: 'Whisky', price: 4800, stock: 6 },
+      ];
+      setInventory(defaultItems);
+      localStorage.setItem('lacianda_inventory', JSON.stringify(defaultItems));
     }
   }, []);
 
-  const saveInventoryUpdated = (updatedList: any[]) => {
-    setInventory(updatedList);
-    localStorage.setItem('lacianda_inventory', JSON.stringify(updatedList));
+  const filteredProducts = inventory.filter((item) => {
+    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const categories = ['All', 'Gin', 'Beer', 'Whisky', 'Aperitif', 'Vodka', 'Wine', 'Tequila'];
+
+  const addToCart = (product: any) => {
+    setCart((prevCart) => {
+      const existing = prevCart.find((item) => item.id === product.id);
+      if (existing) {
+        return prevCart.map((item) =>
+          item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+        );
+      }
+      return [...prevCart, { ...product, qty: 1 }];
+    });
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      const updated = inventory.filter((item) => item.id !== id);
-      saveInventoryUpdated(updated);
+  const calculateTotal = () => {
+    return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  };
+
+  // Mock Checkout Completion Handler
+  const handleCompleteCheckout = () => {
+    const total = calculateTotal();
+    const paid = tenderType === 'Cash' ? parseFloat(amountPaid) || total : total;
+
+    if (tenderType === 'Cash' && paid < total) {
+      alert('Amount paid is less than the total balance.');
+      return;
     }
-  };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updated = inventory.map((item) => (item.id === isEditing.id ? isEditing : item));
-    saveInventoryUpdated(updated);
-    setIsEditing(null);
-  };
+    const transactionData = {
+      id: 'TXN-' + Math.floor(100000 + Math.random() * 900000),
+      date: new Date().toISOString(),
+      items: [...cart],
+      total: total,
+      tenderType: tenderType,
+      amountPaid: paid,
+      change: tenderType === 'Cash' ? paid - total : 0,
+    };
 
-  const filteredInventory = inventory.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase()) ||
-    item.category.toLowerCase().includes(search.toLowerCase())
-  );
+    // Save transaction to local storage sales history
+    const existingSales = JSON.parse(localStorage.getItem('lacianda_sales') || '[]');
+    localStorage.setItem('lacianda_sales', JSON.stringify([transactionData, ...existingSales]));
+
+    // Update inventory stock levels locally
+    const updatedInventory = inventory.map((prod) => {
+      const cartItem = cart.find((item) => item.id === prod.id);
+      if (cartItem) {
+        return { ...prod, stock: Math.max(0, prod.stock - cartItem.qty) };
+      }
+      return prod;
+    });
+    setInventory(updatedInventory);
+    localStorage.setItem('lacianda_inventory', JSON.stringify(updatedInventory));
+
+    // Reset Cart & Open Success Receipt
+    setReceiptSuccess(transactionData);
+    setCart([]);
+    setPaymentModal(false);
+    setAmountPaid('');
+  };
 
   return (
-    <div className="flex flex-1 flex-col h-[calc(100vh-4rem)] bg-gray-50 p-6 overflow-hidden">
-      {/* Header Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Inventory Management</h1>
-          <p className="text-xs text-gray-500">Manage stock quantities, prices, and catalog items.</p>
+    <div className="flex flex-1 h-[calc(100vh-4rem)] bg-gray-100 overflow-hidden relative">
+      {/* Left Pane: Current Sale / Cart */}
+      <div className="w-full lg:w-4/12 bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm">
+        <h2 className="text-lg font-bold text-gray-800 mb-3">Current Sale</h2>
+        
+        {cart.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+            Scan or tap a product to begin.
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            {cart.map((item) => (
+              <div key={item.id} className="flex justify-between items-center bg-gray-50 p-2.5 rounded border border-gray-100">
+                <div>
+                  <p className="font-medium text-sm text-gray-800">{item.name}</p>
+                  <p className="text-xs text-gray-500">KES {item.price} × {item.qty}</p>
+                </div>
+                <p className="font-bold text-sm text-gray-900">KES {item.price * item.qty}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Cart Total & Checkout Actions */}
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          <div className="flex justify-between text-base font-bold text-gray-900 mb-3">
+            <span>Total:</span>
+            <span>KES {calculateTotal().toLocaleString()}</span>
+          </div>
+          <button
+            disabled={cart.length === 0}
+            onClick={() => setPaymentModal(true)}
+            className="w-full py-3 bg-[#4a2e2b] text-white font-medium rounded-lg hover:bg-[#3b2422] disabled:opacity-50 transition-colors"
+          >
+            Charge KES {calculateTotal().toLocaleString()}
+          </button>
         </div>
-        <div className="w-full md:w-72">
+      </div>
+
+      {/* Right Pane: Catalog, Search & Categories */}
+      <div className="flex-1 flex flex-col p-4 overflow-hidden">
+        <div className="mb-3">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search inventory..."
-            className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#4a2e2b]"
+            placeholder="Scan barcode or search products..."
+            className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#4a2e2b] text-sm"
           />
         </div>
-      </div>
 
-      {/* Inventory Table Container */}
-      <div className="flex-1 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-y-auto flex-1">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wider sticky top-0">
-              <tr>
-                <th className="px-6 py-3">Product Name</th>
-                <th className="px-6 py-3">Category</th>
-                <th className="px-6 py-3">Price (KES)</th>
-                <th className="px-6 py-3">Stock Level</th>
-                <th className="px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-sm text-gray-800">
-              {filteredInventory.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-400">
-                    No inventory items found.
-                  </td>
-                </tr>
-              ) : (
-                filteredInventory.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">{item.name}</td>
-                    <td className="px-6 py-4 text-gray-600">
-                      <span className="px-2 py-1 bg-gray-100 rounded text-xs">{item.category}</span>
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-[#4a2e2b]">KES {item.price.toLocaleString()}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${item.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
-                        {item.stock} units
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button
-                        onClick={() => setIsEditing(item)}
-                        className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-medium rounded transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                selectedCategory === cat
+                  ? 'bg-[#4a2e2b] text-white'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 pr-1">
+          {filteredProducts.map((product) => (
+            <button
+              key={product.id}
+              onClick={() => addToCart(product)}
+              className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-[#4a2e2b] transition-all text-left flex flex-col justify-between h-28"
+            >
+              <div>
+                <p className="font-semibold text-xs text-gray-800 line-clamp-2">{product.name}</p>
+                <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${product.stock <= 5 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+                  Stock: {product.stock}
+                </span>
+              </div>
+              <p className="font-bold text-sm text-[#4a2e2b]">KES {product.price.toLocaleString()}</p>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Edit Product Modal */}
-      {isEditing && (
+      {/* Payment Checkout Modal */}
+      {paymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-96 shadow-xl">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Edit Product</h3>
-            <form onSubmit={handleSaveEdit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Product Name</label>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Complete Payment</h3>
+            <p className="text-sm text-gray-600 mb-4">Total Due: <span className="font-bold text-gray-900">KES {calculateTotal().toLocaleString()}</span></p>
+
+            <div className="flex gap-2 mb-4">
+              {['Cash', 'M-Pesa'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setTenderType(type)}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg border transition-all ${
+                    tenderType === type ? 'bg-[#4a2e2b] text-white border-[#4a2e2b]' : 'bg-gray-50 text-gray-700 border-gray-200'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            {tenderType === 'Cash' && (
+              <div className="mb-4">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Amount Tendered (KES)</label>
                 <input
-                  type="text"
-                  value={isEditing.name}
-                  onChange={(e) => setIsEditing({ ...isEditing, name: e.target.value })}
+                  type="number"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  placeholder="Enter cash given"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4a2e2b]"
-                  required
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                <input
-                  type="text"
-                  value={isEditing.category}
-                  onChange={(e) => setIsEditing({ ...isEditing, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4a2e2b]"
-                  required
-                />
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPaymentModal(false)}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteCheckout}
+                className="flex-1 py-2.5 bg-[#4a2e2b] text-white font-medium rounded-lg hover:bg-[#3b2422] text-sm"
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Receipt Modal */}
+      {receiptSuccess && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-96 shadow-xl text-center">
+            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">✓</div>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Transaction Successful</h3>
+            <p className="text-xs text-gray-500 mb-4">{receiptSuccess.id}</p>
+            
+            <div className="bg-gray-50 p-3 rounded-lg text-left text-xs space-y-1 mb-4 border border-gray-100">
+              <div className="flex justify-between font-bold text-gray-800 mb-2">
+                <span>Items:</span>
+                <span>Total: KES {receiptSuccess.total.toLocaleString()}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Price (KES)</label>
-                  <input
-                    type="number"
-                    value={isEditing.price}
-                    onChange={(e) => setIsEditing({ ...isEditing, price: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4a2e2b]"
-                    required
-                  />
+              {receiptSuccess.items.map((i: any) => (
+                <div key={i.id} className="flex justify-between text-gray-600">
+                  <span>{i.name} (x{i.qty})</span>
+                  <span>KES {i.price * i.qty}</span>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Stock</label>
-                  <input
-                    type="number"
-                    value={isEditing.stock}
-                    onChange={(e) => setIsEditing({ ...isEditing, stock: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#4a2e2b]"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(null)}
-                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-[#4a2e2b] text-white font-medium rounded-lg hover:bg-[#3b2422] text-sm"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setReceiptSuccess(null)}
+              className="w-full py-2.5 bg-[#4a2e2b] text-white font-medium rounded-lg hover:bg-[#3b2422] text-sm"
+            >
+              New Sale
+            </button>
           </div>
         </div>
       )}
