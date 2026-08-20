@@ -9,7 +9,7 @@ import {
   type MpesaConfig
 } from '@/lib/mpesaConfig';
 import LabelCard from '@/app/components/LabelCard';
-import WaxSeal from '@/app/components/WaxSeal';
+import WaxSeal from '@/components/WaxSeal';
 
 export default function SettingsPage() {
   const [config, setConfig] = useState<MpesaConfig>(DEFAULT_MPESA_CONFIG);
