@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { requireSession, AuthError } from '@/lib/auth';
-import { stkPush } from '@/lib/mpesa';
+import { initiateStkPush } from '@/lib/mpesa';
 
 interface CartItemInput {
   product_id: string;
