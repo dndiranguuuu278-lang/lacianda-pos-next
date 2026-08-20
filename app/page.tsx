@@ -30,6 +30,51 @@ export default function TillPage() {
     }
   }, []);
 
+  // Barcode Scanner Listener Hook
+  useEffect(() => {
+    let barcodeBuffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentTime = Date.now();
+      
+      // Ignore if user is actively typing in a standard input field
+      if (['INPUT', 'TEXTAREA'].includes((document.activeElement as HTMLElement)?.tagName)) {
+        return;
+      }
+
+      // Hardware scanners input characters very rapidly (< 100ms apart)
+      if (currentTime - lastKeyTime > 100) {
+        barcodeBuffer = '';
+      }
+      lastKeyTime = currentTime;
+
+      if (e.key === 'Enter') {
+        if (barcodeBuffer.trim().length > 0) {
+          const scannedCode = barcodeBuffer.trim();
+          
+          const matchedProduct = inventory.find(
+            (item) => item.id === scannedCode || item.name.toLowerCase().includes(scannedCode.toLowerCase())
+          );
+
+          if (matchedProduct) {
+            addToCart(matchedProduct);
+          } else {
+            console.warn(`Scanned item not found: ${scannedCode}`);
+          }
+        }
+        barcodeBuffer = '';
+      } else if (e.key.length === 1) {
+        barcodeBuffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [inventory]);
+
   const filteredProducts = inventory.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
@@ -54,7 +99,6 @@ export default function TillPage() {
     return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   };
 
-  // Mock Checkout Completion Handler
   const handleCompleteCheckout = () => {
     const total = calculateTotal();
     const paid = tenderType === 'Cash' ? parseFloat(amountPaid) || total : total;
@@ -74,11 +118,9 @@ export default function TillPage() {
       change: tenderType === 'Cash' ? paid - total : 0,
     };
 
-    // Save transaction to local storage sales history
     const existingSales = JSON.parse(localStorage.getItem('lacianda_sales') || '[]');
     localStorage.setItem('lacianda_sales', JSON.stringify([transactionData, ...existingSales]));
 
-    // Update inventory stock levels locally
     const updatedInventory = inventory.map((prod) => {
       const cartItem = cart.find((item) => item.id === prod.id);
       if (cartItem) {
@@ -89,7 +131,6 @@ export default function TillPage() {
     setInventory(updatedInventory);
     localStorage.setItem('lacianda_inventory', JSON.stringify(updatedInventory));
 
-    // Reset Cart & Open Success Receipt
     setReceiptSuccess(transactionData);
     setCart([]);
     setPaymentModal(false);
