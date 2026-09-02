@@ -3,25 +3,8 @@
 // feeding an ESC/POS Bluetooth thermal printer). No DOM or Node-only APIs,
 // so it's safe to import from either a route handler or a client component.
 
-export interface ReceiptItem {
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  line_total: number;
-}
-
-export interface ReceiptData {
-  storeName: string;
-  receiptNumber: string;
-  items: ReceiptItem[];
-  taxAmount: number;
-  totalAmount: number;
-  paymentMethod: 'cash' | 'mpesa';
-  mpesaCode?: string | null;
-  etimsCuin?: string | null;
-  etimsQrUrl?: string | null;
-  createdAt?: string;
-}
+import type { ReceiptItem, ReceiptData } from '@/types';
+export type { ReceiptItem, ReceiptData };
 
 export function formatKES(n: number): string {
   return `KES ${Number(n || 0).toLocaleString('en-KE', { minimumFractionDigits: 2 })}`;
@@ -56,15 +39,15 @@ export function buildReceiptHtml(data: ReceiptData): string {
 <title>Receipt ${escapeHtml(data.receiptNumber)}</title>
 <style>
   @page { size: 80mm auto; margin: 4mm; }
-  body { font-family: 'Courier New', monospace; width: 72mm; margin: 0 auto; color: #000; font-size: 12px; }
+  body { font-family: 'Courier New', monospace; width: 72mm; margin: 0 auto; color: black; font-size: 12px; }
   h1 { font-size: 15px; text-align: center; margin: 0 0 2px; }
-  .muted { color: #444; text-align: center; font-size: 10px; margin-bottom: 6px; }
-  hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+  .muted { color: dimgray; text-align: center; font-size: 10px; margin-bottom: 6px; }
+  hr { border: none; border-top: 1px dashed black; margin: 6px 0; }
   table { width: 100%; border-collapse: collapse; }
   td { padding: 2px 0; vertical-align: top; }
   .right { text-align: right; white-space: nowrap; }
   .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
-  .footer { text-align: center; margin-top: 10px; font-size: 10px; color: #444; }
+  .footer { text-align: center; margin-top: 10px; font-size: 10px; color: dimgray; }
 </style>
 </head>
 <body>

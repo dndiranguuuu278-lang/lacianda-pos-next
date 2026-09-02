@@ -10,7 +10,7 @@ export async function GET() {
     // Settings are read on every page (Navbar, Till, etc.) — degrade to
     // sensible defaults instead of breaking the whole app when the DB
     // isn't reachable yet.
-    return NextResponse.json({ settings: { store_name: 'Lacianda POS', theme_mode: 'dark', accent_color: '#10b981' } });
+    return NextResponse.json({ settings: { store_name: 'Lacianda POS', theme_mode: 'dark', accent_color: 'emerald' } });
   }
 }
 

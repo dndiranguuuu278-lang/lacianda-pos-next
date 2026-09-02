@@ -3,14 +3,7 @@ import { query } from '@/lib/db';
 import { parseStkCallback } from '@/lib/mpesa';
 import { submitInvoice, enqueueInvoice } from '@/lib/etims';
 import { publish } from '@/lib/sse';
-
-interface CartLineItem {
-  product_id: string;
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  line_total: number;
-}
+import type { CartLineItem } from '@/types';
 
 function generateReceiptNumber() {
   const now = new Date();

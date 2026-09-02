@@ -4,13 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/apiClient';
 
-export interface SessionUser {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-  hasPin: boolean;
-}
+import type { SessionUser } from '@/types';
+export type { SessionUser };
 
 /** Fetches the current session; redirects to /login if there isn't one. */
 export function useRequireSession() {

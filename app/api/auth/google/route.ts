@@ -2,17 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OAuth2Client } from 'google-auth-library';
 import { query } from '@/lib/db';
 import { issueSession } from '@/lib/auth';
+import type { UserRow } from '@/types';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-interface UserRow {
-  id: string;
-  google_id: string | null;
-  email: string;
-  name: string | null;
-  role: string;
-  pin_hash: string | null;
-}
 
 export async function POST(req: NextRequest) {
   try {

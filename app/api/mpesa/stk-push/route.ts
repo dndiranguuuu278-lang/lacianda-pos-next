@@ -7,15 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // that these secrets do travel over this request; only call this route over
 // HTTPS in production.
 
-interface StkPushBody {
-  consumerKey?: string;
-  consumerSecret?: string;
-  shortcode?: string;
-  passkey?: string;
-  environment?: 'sandbox' | 'production';
-  phone?: string;
-  amount?: number;
-}
+import type { StkPushBody } from '@/types';
 
 function timestamp(): string {
   const d = new Date();

@@ -1,14 +1,5 @@
-export type MpesaMode = 'simulation' | 'live';
-export type MpesaEnvironment = 'sandbox' | 'production';
-
-export interface MpesaConfig {
-  mode: MpesaMode;
-  environment: MpesaEnvironment;
-  shortcode: string;
-  passkey: string;
-  consumerKey: string;
-  consumerSecret: string;
-}
+import type { MpesaMode, MpesaEnvironment, MpesaConfig } from '@/types';
+export type { MpesaMode, MpesaEnvironment, MpesaConfig };
 
 export const MPESA_CONFIG_STORAGE_KEY = 'lacianda_pos_config';
 

@@ -4,12 +4,8 @@ import { cookies } from 'next/headers';
 export const COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'lacianda_session';
 const SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
-export interface SessionUser {
-  id: string;
-  email: string;
-  name: string | null;
-  role: string;
-}
+import type { SessionUser } from '@/types';
+export type { SessionUser };
 
 export async function issueSession(user: SessionUser) {
   const token = jwt.sign(user, SECRET, { expiresIn: '30d' });

@@ -11,25 +11,19 @@ import { query } from './db';
 
 const BASE_URL = process.env.ETIMS_BASE_URL || 'https://etims-api-sbx.kra.go.ke';
 
-export interface EtimsLineItem {
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  line_total: number;
-}
+import type {
+  EtimsLineItem,
+  EtimsInvoiceInput,
+  EtimsSubmissionResult,
+  EtimsQueueRow
+} from '@/types';
 
-export interface EtimsInvoiceInput {
-  receiptNumber: string;
-  items: EtimsLineItem[];
-  totalAmount: number;
-  taxAmount: number;
-}
-
-export interface EtimsSubmissionResult {
-  cuin: string | null;
-  qrUrl: string | null;
-  raw: unknown;
-}
+export type {
+  EtimsLineItem,
+  EtimsInvoiceInput,
+  EtimsSubmissionResult,
+  EtimsQueueRow
+};
 
 /**
  * Builds the signed request payload KRA expects. The CMC key acts as a
@@ -138,18 +132,6 @@ export async function processQueueEntry(queueId: string): Promise<{ status: 'sub
   }
 }
 
-export interface EtimsQueueRow {
-  id: string;
-  sale_id: string;
-  receipt_number: string;
-  status: 'pending' | 'submitted' | 'failed';
-  attempts: number;
-  last_error: string | null;
-  cuin: string | null;
-  qr_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
 
 export async function listQueue(status?: string): Promise<EtimsQueueRow[]> {
   if (status) {

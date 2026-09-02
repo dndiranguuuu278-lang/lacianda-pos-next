@@ -1,23 +1,336 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* app/globals.css */
+@import "tailwindcss";
 
+/* ========================================================= */
+/* 1. TAILWIND INLINE THEME ENGINE                           */
+/* All layout tokens & colors map directly to CSS variables  */
+/* for easy global theming and modular interchangeability.   */
+/* ========================================================= */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --font-body: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --font-display: var(--font-display, Georgia, Cambria, 'Times New Roman', serif);
+  --font-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+
+  /* Layout Shell Tokens */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  /* Chart & Analytics Tokens */
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  /* Semantic UI Tokens */
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Lacianda Core Paper & Ink Tokens */
+  --color-paper: var(--color-paper);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-line: var(--color-line);
+
+  /* Brand Burgundy / Vintage Wine Palette */
+  --color-wine-950: var(--color-wine-950);
+  --color-wine-900: var(--color-wine-900);
+  --color-wine-800: var(--color-wine-800);
+  --color-wine-700: var(--color-wine-700);
+  --color-wine-600: var(--color-wine-600);
+  --color-wine-500: var(--color-wine-500);
+  --color-wine-400: var(--color-wine-400);
+  --color-wine-300: var(--color-wine-300);
+  --color-wine-200: var(--color-wine-200);
+  --color-wine-100: var(--color-wine-100);
+  --color-wine-50: var(--color-wine-50);
+
+  /* Emerald / Fiscal Success Palette */
+  --color-emerald-900: var(--color-emerald-900);
+  --color-emerald-800: var(--color-emerald-800);
+  --color-emerald-700: var(--color-emerald-700);
+  --color-emerald-600: var(--color-emerald-600);
+  --color-emerald-500: var(--color-emerald-500);
+  --color-emerald-400: var(--color-emerald-400);
+  --color-emerald-300: var(--color-emerald-300);
+  --color-emerald-200: var(--color-emerald-200);
+  --color-emerald-100: var(--color-emerald-100);
+
+  /* Amber / Gold Palette */
+  --color-gold-700: var(--color-gold-700);
+  --color-gold-500: var(--color-gold-500);
+  --color-gold-300: var(--color-gold-300);
+  --color-gold-100: var(--color-gold-100);
+
+  /* Danger / Void Palette */
+  --color-danger-700: var(--color-danger-700);
+  --color-danger-500: var(--color-danger-500);
+  --color-danger-100: var(--color-danger-100);
+
+  /* Brand Convenience Aliases */
+  --color-brand-900: var(--brand-900);
+  --color-brand-800: var(--brand-800);
+  --color-brand-700: var(--brand-700);
+  --color-brand-50: var(--brand-50);
+
+  /* Radius Tokens */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+/* ========================================================= */
+/* 2. BASE ROOT DESIGN TOKENS (Easily interchangeable)       */
+/* Modify values here to change site theme across all pages  */
+/* ========================================================= */
+:root {
+  --radius: 0.75rem;
+  --ui-root-size: 15px;
+  --shell-sidebar-width: 17rem;
+  --shell-sidebar-collapsed: 5.5rem;
+
+  /* Surfaces & Core Paper */
+  --background: #f4f4f6;
+  --foreground: #111827;
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --popover: #ffffff;
+  --popover-foreground: #111827;
+
+  /* Lacianda Core Neutral & Paper Tokens */
+  --color-paper: #fdfbf6;
+  --color-ink: #111827;
+  --color-ink-muted: #6b7280;
+  --color-line: #e5e7eb;
+
+  /* Primary Canonical Brand Palette (Deep Vintage Wine / Burgundy) */
+  --primary: #4a221f;
+  --primary-foreground: #fdfbf6;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #391816;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #fdf4f3;
+  --accent-foreground: #4a221f;
+  --destructive: #b91c1c;
+  --border: #e5e7eb;
+  --input: #d1d5db;
+  --ring: #4a221f;
+
+  /* Legacy Brand Aliases */
+  --brand-900: #391816;
+  --brand-800: #4a221f;
+  --brand-700: #5d2a27;
+  --brand-50: #fdf4f3;
+
+  /* POS Shell & Navigation Tokens */
+  --sidebar: #391816;
+  --sidebar-foreground: #fdfbf6;
+  --sidebar-primary: #4a221f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #4a221f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(74, 34, 31, 0.2);
+  --sidebar-ring: #8b3a35;
+
+  /* Financial & Sales Analytics Charts */
+  --chart-1: #4a221f;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #2563eb;
+  --chart-5: #7c3aed;
+
+  /* Deep Vintage Wine Burgundy Palette */
+  --color-wine-950: #1c0a09;
+  --color-wine-900: #2a0f0e;
+  --color-wine-800: #391816;
+  --color-wine-700: #4a221f;
+  --color-wine-600: #5d2a27;
+  --color-wine-500: #733430;
+  --color-wine-400: #8c423e;
+  --color-wine-300: #b06b66;
+  --color-wine-200: #d6a19d;
+  --color-wine-100: #f3dbd9;
+  --color-wine-50: #fdf4f3;
+
+  /* Emerald / Fiscal eTIMS Success Palette */
+  --color-emerald-900: #064e3b;
+  --color-emerald-800: #065f46;
+  --color-emerald-700: #047857;
+  --color-emerald-600: #059669;
+  --color-emerald-500: #10b981;
+  --color-emerald-400: #34d399;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-100: #dcfce7;
+
+  /* Gold / Amber Palette */
+  --color-gold-700: #b45309;
+  --color-gold-500: #d97706;
+  --color-gold-300: #fcd34d;
+  --color-gold-100: #fef3c7;
+
+  /* Danger / Voided Sale Palette */
+  --color-danger-700: #991b1b;
+  --color-danger-500: #b91c1c;
+  --color-danger-100: #fee2e2;
+
+  /* Brand Convenience Aliases */
+  --color-brand-wine: #4a221f;
+  --color-brand-wine-dark: #391816;
+  --color-brand-wine-light: #5d2a27;
+  --color-brand-cream: #fdfbf6;
+}
+
+/* ========================================================= */
+/* 3. BASE LAYER & SCALING                                   */
+/* ========================================================= */
 @layer base {
-  :root {
-    --background: #f9fafb;
-    --foreground: #111827;
+  html {
+    font-size: var(--ui-root-size);
   }
 
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  /* Compact displays ~125% scale */
+  html[data-ui-scale="compact"] {
+    --ui-root-size: 13px;
+    --shell-sidebar-width: 15rem;
+    --shell-sidebar-collapsed: 4.5rem;
+  }
+
+  /* High density POS tablets ~150% */
+  html[data-ui-scale="compact-high"] {
+    --ui-root-size: 12px;
+    --shell-sidebar-width: 14rem;
+    --shell-sidebar-collapsed: 4rem;
+  }
+
+  body,
+  html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    background-color: var(--background, #f4f4f6);
+    color: var(--foreground, #111827);
+    font-family: var(--font-sans, system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  body {
+    background-color: var(--background, #f4f4f6);
+    color: var(--foreground, #111827);
+    min-height: 100dvh;
+  }
 }
 
-/* Custom Utilities for Hide Scrollbar */
+/* ========================================================= */
+/* 4. UTILITY CLASSES & ENHANCEMENTS                         */
+/* ========================================================= */
+
+/* Tabular figures for financial currency alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+}
+
+/* Touch Target Standard for POS & Tablets (44px Minimum) */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Premium Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(74, 34, 31, 0.2);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 34, 31, 0.4);
+  background-clip: content-box;
+}
+
+/* Specialized Custom Scrollbar Class */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--primary) 32%, transparent),
+    color-mix(in srgb, var(--primary) 12%, transparent)
+  );
+}
+
+/* Smooth Soft Scroll with Accent */
+.store-soft-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--primary) 35%, transparent) transparent;
+}
+
+.store-soft-scroll::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.store-soft-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 8px;
+}
+
+.store-soft-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--primary) 28%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.store-soft-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 48%, transparent);
+  background-clip: content-box;
+}
+
+/* Custom Utilities for Scrollbars */
 @layer utilities {
   .scrollbar-none::-webkit-scrollbar {
     display: none;
@@ -26,18 +339,79 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
 }
 
-/* Print Stylesheet for Receipts & Z-Reports */
+/* Squircles / Continuous Smooth Radii */
+.squircle {
+  border-radius: 1rem;
+}
+
+.squircle-sm {
+  border-radius: 0.75rem;
+}
+
+.squircle-lg {
+  border-radius: 1.5rem;
+}
+
+.squircle-xl {
+  border-radius: 2rem;
+}
+
+/* Pulse Glow Keyframes */
+@keyframes fab-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(1.85);
+    opacity: 0;
+  }
+}
+
+.fab-pulse-ring {
+  animation: fab-pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes flow {
+  0% {
+    stroke-dashoffset: 40;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-flow {
+  stroke-dasharray: 20 20;
+  animation: flow 2.5s linear infinite;
+}
+
+/* Print Stylesheet for Thermal Receipts & Reports */
 @media print {
-  /* Hide the global navigation bar, sidebars, and interactive buttons during printing */
   nav,
+  header,
   button,
   .no-print {
     display: none !important;
   }
 
-  /* Reset layout constraints for paper printing */
   body,
   html {
     background: white !important;
@@ -46,7 +420,6 @@
     overflow: visible !important;
   }
 
-  /* Force clean container widths and padding for receipts */
   main,
   div {
     padding: 0 !important;
@@ -54,7 +427,6 @@
     box-shadow: none !important;
   }
 
-  /* Ensure modals or receipt cards take full width cleanly without backdrop */
   .fixed {
     position: static !important;
     background: none !important;

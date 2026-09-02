@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { requireSession, AuthError } from '@/lib/auth';
-import { initiateStkPush } from '@/lib/mpesa';
-
-interface CartItemInput {
-  product_id: string;
-  quantity: number;
-}
-
-interface ProductRow {
-  id: string;
-  name: string;
-  selling_price: string;
-  stock_qty: number;
-}
+import { stkPush } from '@/lib/mpesa';
+import type { CartItemInput, ProductRow } from '@/types';
 
 /**
  * POST /api/stk-push

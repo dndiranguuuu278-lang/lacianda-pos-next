@@ -1,4 +1,4 @@
-import { mpesaConfig } from './mpesaConfig';
+import { getMpesaConfig, type MpesaConfig } from './mpesaConfig';
 
 // Helper to generate random codes for request IDs
 export function randomCode(prefix: string, length: number = 10): string {
@@ -15,8 +15,9 @@ function delay(ms: number) {
 }
 
 // 1. Initiates the STK Push request
-export async function initiateStkPush(phone: string, amount: number) {
+export async function initiateStkPush(params: { phone: string; amount: number; accountRef?: string; description?: string }) {
   const checkoutRequestId = randomCode('ws_', 10);
+  const merchantRequestId = randomCode('mr_', 10);
   
   // Simulated delay to mimic Safaricom M-Pesa prompt behavior
   await delay(1800 + Math.random() * 1400);
@@ -27,6 +28,8 @@ export async function initiateStkPush(phone: string, amount: number) {
       success: false,
       simulated: true,
       checkoutRequestId,
+      CheckoutRequestID: checkoutRequestId,
+      MerchantRequestID: merchantRequestId,
       message: 'Simulated payment failed - customer cancelled or PIN timeout.',
     };
   }
@@ -35,10 +38,13 @@ export async function initiateStkPush(phone: string, amount: number) {
     success: true,
     simulated: true,
     checkoutRequestId,
-    merchantRequestID: randomCode('mr_', 10),
+    CheckoutRequestID: checkoutRequestId,
+    MerchantRequestID: merchantRequestId,
     message: 'Success. Request accepted for processing',
   };
 }
+
+export const stkPush = initiateStkPush;
 
 // 2. Parses the incoming M-Pesa STK callback webhook response
 export function parseStkCallback(callbackData: any) {
@@ -48,14 +54,18 @@ export function parseStkCallback(callbackData: any) {
       success: false, 
       resultCode: -1, 
       resultDesc: 'Invalid callback structure', 
+      checkoutRequestId: '',
       checkoutRequestID: '' 
     };
   }
 
+  const reqId = body.CheckoutRequestID || '';
+
   return {
     resultCode: body.ResultCode,
     resultDesc: body.ResultDesc,
-    checkoutRequestID: body.CheckoutRequestID,
+    checkoutRequestId: reqId,
+    checkoutRequestID: reqId,
     success: body.ResultCode === 0,
     amount: body.CallbackMetadata?.Item?.find((i: any) => i.Name === 'Amount')?.Value || 0,
     mpesaReceiptNumber: body.CallbackMetadata?.Item?.find((i: any) => i.Name === 'MpesaReceiptNumber')?.Value || '',

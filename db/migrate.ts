@@ -56,7 +56,7 @@ const STATEMENTS = [
     id INT PRIMARY KEY DEFAULT 1,
     store_name VARCHAR DEFAULT 'Lacianda POS',
     theme_mode VARCHAR DEFAULT 'dark',
-    accent_color VARCHAR DEFAULT '#0f172a',
+    accent_color VARCHAR DEFAULT 'wine',
     kra_pin VARCHAR,
     mpesa_shortcode VARCHAR,
     logo_url TEXT,

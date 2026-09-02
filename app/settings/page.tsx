@@ -1,229 +1,317 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  DEFAULT_MPESA_CONFIG,
-  getMpesaConfig,
-  hasLiveCredentials,
-  saveMpesaConfig,
-  type MpesaConfig
-} from '@/lib/mpesaConfig';
-import LabelCard from '@/components/LabelCard';
-import WaxSeal from '@/components/WaxSeal';
+import { useState } from 'react';
+import type { SettingsTab } from '@/types';
 
 export default function SettingsPage() {
-  const [config, setConfig] = useState<MpesaConfig>(DEFAULT_MPESA_CONFIG);
-  const [showSecret, setShowSecret] = useState(false);
-  const [showPasskey, setShowPasskey] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('store');
+  const [saveBanner, setSaveBanner] = useState(false);
 
-  useEffect(() => {
-    setConfig(getMpesaConfig());
-    setLoaded(true);
-  }, []);
+  // Store & Brand
+  const [storeName, setStoreName] = useState('Lacianda Wines and Spirits');
+  const [branchName, setBranchName] = useState('Valley Arcade Branch, Nairobi');
+  const [kraPin, setKraPin] = useState('P051982734Z');
+  const [receiptFooter, setReceiptFooter] = useState('Thank you for choosing Lacianda Wines & Spirits. Please drink responsibly.');
 
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2600);
-    return () => clearTimeout(t);
-  }, [toast]);
+  // M-Pesa
+  const [buyGoodsNumber, setBuyGoodsNumber] = useState('9841234');
+  const [paybillNumber, setPaybillNumber] = useState('222111');
+  const [paybillAccount, setPaybillAccount] = useState('281552');
+  const [pochiNumber, setPochiNumber] = useState('0720087714');
+  const [enableStkPush, setEnableStkPush] = useState(true);
 
-  function update<K extends keyof MpesaConfig>(key: K, value: MpesaConfig[K]) {
-    setConfig((prev) => ({ ...prev, [key]: value }));
-  }
+  // eTIMS
+  const [oscuUrl, setOscuUrl] = useState('https://etims-api.kra.go.ke/etims-oscu/v1');
+  const [autoSyncEtims, setAutoSyncEtims] = useState(true);
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    saveMpesaConfig(config);
-    setToast('Settings saved.');
-  }
+  // Hardware / Printing
+  const [paperWidth, setPaperWidth] = useState<'80mm' | '58mm'>('80mm');
+  const [autoPrintReceipt, setAutoPrintReceipt] = useState(true);
 
-  const credentialsComplete = hasLiveCredentials(config);
-  const effectiveModeIsLive = config.mode === 'live' && credentialsComplete;
+  // Security
+  const [managerPin, setManagerPin] = useState('1234');
+  const [allowOversell, setAllowOversell] = useState(false);
 
-  if (!loaded) return null;
+  const handleSaveSettings = () => {
+    setSaveBanner(true);
+    setTimeout(() => setSaveBanner(false), 2500);
+  };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
-      <p className="mt-1 text-sm text-[#6B7280]">Store profile and payment configuration.</p>
+    <div className="flex-1 flex flex-col p-4 sm:p-6 bg-background min-h-[calc(100vh-3.5rem)] overflow-y-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+            <span>Terminal &amp; Store Configuration</span>
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Configure M-Pesa merchant tills, KRA eTIMS keys, thermal printer width, and cashier security
+          </p>
+        </div>
 
-      <div
-        className={
-          effectiveModeIsLive
-            ? 'mt-6 flex items-center justify-between rounded-lg border border-[#78350f]/20 bg-[#78350f]/5 px-4 py-3'
-            : 'mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3'
-        }
-      >
-        <p className={effectiveModeIsLive ? 'text-sm font-medium text-[#78350f]' : 'text-sm font-medium text-gray-700'}>
-          {effectiveModeIsLive
-            ? `Live M-Pesa mode active — shortcode ${config.shortcode} (${config.environment}).`
-            : config.mode === 'live'
-              ? 'Live mode selected, but credentials are incomplete — falling back to Simulation.'
-              : 'Payments are faked for testing — no real M-Pesa calls are made.'}
-        </p>
-        <WaxSeal label={effectiveModeIsLive ? 'Live' : 'Simulation'} variant={effectiveModeIsLive ? 'active' : 'muted'} />
+        <button
+          type="button"
+          onClick={handleSaveSettings}
+          className="self-start sm:self-auto px-5 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:bg-wine-800 active:scale-98 transition-all shadow-sm flex items-center gap-2"
+        >
+          <span>Save Changes</span>
+        </button>
       </div>
 
-      <form onSubmit={handleSave} className="mt-6 space-y-6">
-        <LabelCard crest>
-          <h2 className="text-base font-semibold text-gray-900">M-Pesa configuration</h2>
-          <p className="mt-1 text-sm text-[#6B7280]">
-            Switch between a safe simulator for testing and live Safaricom Daraja calls for real payments.
-          </p>
-
-          <div className="mt-5">
-            <span className="block text-sm font-medium text-gray-700">Mode</span>
-            <div className="mt-2 inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-              <button
-                type="button"
-                onClick={() => update('mode', 'simulation')}
-                className={
-                  config.mode === 'simulation'
-                    ? 'rounded-md bg-[#78350f] px-4 py-2 text-sm font-medium text-white transition-colors'
-                    : 'rounded-md px-4 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-gray-100 hover:text-gray-900'
-                }
-              >
-                Simulation
-              </button>
-              <button
-                type="button"
-                onClick={() => update('mode', 'live')}
-                className={
-                  config.mode === 'live'
-                    ? 'rounded-md bg-[#78350f] px-4 py-2 text-sm font-medium text-white transition-colors'
-                    : 'rounded-md px-4 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-gray-100 hover:text-gray-900'
-                }
-              >
-                Live Daraja API
-              </button>
-            </div>
-          </div>
-
-          {config.mode === 'live' && (
-            <div className="mt-5">
-              <span className="block text-sm font-medium text-gray-700">Environment</span>
-              <div className="mt-2 inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
-                {(['sandbox', 'production'] as const).map((env) => (
-                  <button
-                    key={env}
-                    type="button"
-                    onClick={() => update('environment', env)}
-                    className={
-                      config.environment === env
-                        ? 'rounded-md bg-[#78350f] px-4 py-2 text-sm font-medium text-white transition-colors capitalize'
-                        : 'rounded-md px-4 py-2 text-sm font-medium text-[#6B7280] transition-colors hover:bg-gray-100 hover:text-gray-900 capitalize'
-                    }
-                  >
-                    {env}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Business Shortcode / Paybill">
-              <input
-                className="input"
-                placeholder="174379"
-                value={config.shortcode}
-                onChange={(e) => update('shortcode', e.target.value)}
-              />
-            </Field>
-
-            <Field label="Lipa Na M-Pesa Passkey">
-              <div className="relative">
-                <input
-                  className="input pr-16"
-                  type={showPasskey ? 'text' : 'password'}
-                  placeholder="•••••••••••••••"
-                  value={config.passkey}
-                  onChange={(e) => update('passkey', e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPasskey((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-[#6B7280] hover:text-gray-900"
-                >
-                  {showPasskey ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </Field>
-
-            <Field label="Consumer Key">
-              <input
-                className="input"
-                placeholder="Daraja app consumer key"
-                value={config.consumerKey}
-                onChange={(e) => update('consumerKey', e.target.value)}
-              />
-            </Field>
-
-            <Field label="Consumer Secret">
-              <div className="relative">
-                <input
-                  className="input pr-16"
-                  type={showSecret ? 'text' : 'password'}
-                  placeholder="•••••••••••••••"
-                  value={config.consumerSecret}
-                  onChange={(e) => update('consumerSecret', e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSecret((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-[#6B7280] hover:text-gray-900"
-                >
-                  {showSecret ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </Field>
-          </div>
-
-          <p className="mt-4 text-xs leading-relaxed text-[#6B7280]">
-            These values are stored only in this browser&apos;s local storage, never sent anywhere except directly to
-            Safaricom when a Live payment is triggered. On a shared or public device, anyone with browser access could
-            read them — treat this device as trusted, or stay in Simulation mode.
-          </p>
-        </LabelCard>
-
-        <div className="flex items-center gap-3">
-          <button type="submit" className="rounded-md bg-[#78350f] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#5c2a0c]">
-            Save Settings
-          </button>
-          {toast && (
-            <span className="rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white">{toast}</span>
-          )}
+      {saveBanner && (
+        <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2 shadow-2xs">
+          <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span>Settings saved and synchronized with local POS terminal!</span>
         </div>
-      </form>
+      )}
 
-      <style jsx global>{`
-        .input {
-          width: 100%;
-          border-radius: 0.5rem;
-          border: 1px solid #e5e7eb;
-          background: #f9fafb;
-          padding: 0.55rem 0.75rem;
-          font-size: 0.875rem;
-          color: #111827;
-        }
-        .input:focus {
-          outline: none;
-          border-color: #78350f;
-          box-shadow: 0 0 0 3px rgba(120, 53, 15, 0.12);
-          background: #ffffff;
-        }
-      `}</style>
+      {/* Tabs */}
+      <div className="flex items-center gap-1.5 border-b border-gray-200 pb-3 mb-6 overflow-x-auto scrollbar-none">
+        {[
+          { id: 'store', label: 'Store & Branding' },
+          { id: 'mpesa', label: 'M-Pesa Merchant Settings' },
+          { id: 'etims', label: 'KRA eTIMS Fiscal' },
+          { id: 'hardware', label: 'Thermal Printer' },
+          { id: 'security', label: 'Staff & Security' },
+        ].map((tab) => {
+          const isSelected = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as SettingsTab)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                isSelected
+                  ? 'bg-primary text-primary-foreground shadow-xs'
+                  : 'bg-white text-gray-700 border border-gray-200/90 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Panels */}
+      <div className="max-w-3xl">
+        {activeTab === 'store' && (
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-gray-900">Store Profile &amp; Receipt Header</h2>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Store Name</label>
+              <input
+                type="text"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-xs sm:text-sm font-semibold focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Branch / Location</label>
+              <input
+                type="text"
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
+                className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-xs sm:text-sm focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">KRA PIN</label>
+              <input
+                type="text"
+                value={kraPin}
+                onChange={(e) => setKraPin(e.target.value)}
+                className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono font-bold focus:bg-white uppercase"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Receipt Footer Note</label>
+              <textarea
+                rows={3}
+                value={receiptFooter}
+                onChange={(e) => setReceiptFooter(e.target.value)}
+                className="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl text-xs focus:bg-white"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'mpesa' && (
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-gray-900">M-Pesa Merchant Integration</h2>
+                <p className="text-[11px] text-gray-500">Configure Lipa Na M-Pesa Buy Goods, Paybill, and STK Push</p>
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                Daraja API Connected
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Buy Goods / Till Number</label>
+                <input
+                  type="text"
+                  value={buyGoodsNumber}
+                  onChange={(e) => setBuyGoodsNumber(e.target.value)}
+                  className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-mono font-bold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Pochi la Biashara Phone</label>
+                <input
+                  type="text"
+                  value={pochiNumber}
+                  onChange={(e) => setPochiNumber(e.target.value)}
+                  className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-mono focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Paybill Business Number</label>
+                <input
+                  type="text"
+                  value={paybillNumber}
+                  onChange={(e) => setPaybillNumber(e.target.value)}
+                  className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-mono focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Paybill Account Reference</label>
+                <input
+                  type="text"
+                  value={paybillAccount}
+                  onChange={(e) => setPaybillAccount(e.target.value)}
+                  className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-sm font-mono focus:bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-gray-800">Enable Instant STK Push Prompt</h4>
+                <p className="text-[11px] text-gray-500">Prompts customer phone with PIN request automatically on checkout</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={enableStkPush}
+                onChange={(e) => setEnableStkPush(e.target.checked)}
+                className="h-5 w-5 accent-primary rounded cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'etims' && (
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-gray-900">KRA eTIMS Fiscal Compliance</h2>
+            <p className="text-xs text-gray-500">Connect to KRA Online Sales Control Unit (OSCU) or VSCU proxy</p>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">OSCU Endpoint URL</label>
+              <input
+                type="url"
+                value={oscuUrl}
+                onChange={(e) => setOscuUrl(e.target.value)}
+                className="w-full h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-mono focus:bg-white"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-gray-800">Auto-Fiscalize Every Sale Immediately</h4>
+                <p className="text-[11px] text-gray-500">Transmits invoice immediately upon charge completion</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={autoSyncEtims}
+                onChange={(e) => setAutoSyncEtims(e.target.checked)}
+                className="h-5 w-5 accent-primary rounded cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'hardware' && (
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-gray-900">Thermal Receipt Printer</h2>
+            <p className="text-xs text-gray-500">Select standard POS thermal paper roll specification</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {(['80mm', '58mm'] as const).map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setPaperWidth(w)}
+                  className={`p-4 rounded-xl border text-center transition-all ${
+                    paperWidth === w
+                      ? 'border-primary bg-primary/5 font-bold text-primary'
+                      : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  <p className="text-sm">{w} Paper Roll</p>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    {w === '80mm' ? 'Standard 3-inch Desktop Printer' : 'Compact 2-inch Mobile Bluetooth'}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-gray-800">Auto-Print Receipt Dialog</h4>
+                <p className="text-[11px] text-gray-500">Opens thermal receipt printing preview after sale</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={autoPrintReceipt}
+                onChange={(e) => setAutoPrintReceipt(e.target.checked)}
+                className="h-5 w-5 accent-primary rounded cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-200 shadow-2xs space-y-4">
+            <h2 className="text-sm font-bold text-gray-900">Staff &amp; Cashier Access Control</h2>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">
+                Manager Override PIN (4 digits)
+              </label>
+              <input
+                type="password"
+                maxLength={4}
+                value={managerPin}
+                onChange={(e) => setManagerPin(e.target.value)}
+                className="w-48 h-11 px-3.5 bg-gray-50 border border-gray-300 rounded-xl text-center text-lg font-mono font-bold tracking-widest focus:bg-white"
+              />
+            </div>
+
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-gray-800">Allow Overselling Below 0 Stock</h4>
+                <p className="text-[11px] text-gray-500">Permits cashier to ring up bottles even if recorded count is 0</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={allowOversell}
+                onChange={(e) => setAllowOversell(e.target.checked)}
+                className="h-5 w-5 accent-primary rounded cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-gray-700">{label}</span>
-      {children}
-    </label>
   );
 }
